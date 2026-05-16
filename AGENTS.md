@@ -17,6 +17,10 @@ Work in this repository should help students:
 
 Prefer small, test-driven changes. Preserve the assignment structure and avoid replacing the intended implementations with large external abstractions that bypass the learning goals.
 
+## Coding Restrictions
+
+Comprehensive coding restrictions are documented in `requirements_for_code_produced.md`. All code generated that directly answers assignment questions must conform to those requirements, except for code used purely for error checking, unit tests, or logging.
+
 ## Project Workflow
 
 This project uses `uv` for Python environment and dependency management. Common commands:
