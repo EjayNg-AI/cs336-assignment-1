@@ -31,6 +31,7 @@ MANIFEST
 # uv and Python tooling
 .python-version
 __pypackages__/
+.uv-cache/
 
 # Notebook and editor state
 .ipynb_checkpoints/
@@ -49,6 +50,7 @@ Thumbs.db
 .cache/
 
 # Local training and experiment outputs
+data/
 wandb/
 runs/
 outputs/
