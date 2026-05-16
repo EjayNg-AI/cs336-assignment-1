@@ -2,20 +2,16 @@
 
 ## Repository Purpose
 
-This repository is the starter code for CS336 Assignment 1: Basics. It is an educational implementation project for core language-modeling systems: tokenization, model layers, transformer blocks, optimization, data loading, serialization, and training utilities.
+This repository is the starter code for CS336 Assignment 1: Basics. It is an implementation project for core language-modeling systems: tokenization, model layers, transformer blocks, optimization, data loading, serialization, and training utilities.
 
-The code is intentionally incomplete. Tests in `tests/` define the expected behavior, and `tests/adapters.py` connects student implementations to the public test suite.
+Tests in `tests/` define the expected behavior, and `tests/adapters.py` connects implementations to the test suite.
 
-## Goals and Educational Outcomes
-
-Work in this repository should help students:
+## Goals
 
 - Build a working byte-pair encoding tokenizer and understand how tokenization affects language-model training.
 - Implement neural network primitives used in transformer language models, including embeddings, normalization, attention, feed-forward layers, and full transformer blocks.
 - Understand training infrastructure such as batching, checkpointing, optimizer behavior, and reproducible testing.
 - Practice reading specifications, matching reference behavior, and validating implementations with focused unit tests.
-
-Prefer small, test-driven changes. Preserve the assignment structure and avoid replacing the intended implementations with large external abstractions that bypass the learning goals.
 
 ## Coding Restrictions
 
