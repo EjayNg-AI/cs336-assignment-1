@@ -45,3 +45,30 @@ gunzip owt_valid.txt.gz
 cd ..
 ```
 
+### Run the enhanced BPE trainer
+
+The enhanced BPE trainer is an optional large-corpus variant of the tokenizer
+trainer. It is not wired into `tests/adapters.py`; import it directly when you
+want multiprocessing pre-token counting and saved training artifacts.
+
+After downloading the full TinyStories data, run:
+
+```sh
+uv run python -u - <<'PY'
+from cs336_basics.train_bpe_enhanced import train_bpe
+
+train_bpe(
+    input_path="data/TinyStoriesV2-GPT4-train.txt",
+    vocab_size=10_000,
+    special_tokens=["<|endoftext|>"],
+    num_workers=8,
+    chunk_bytes=64 * 1024 * 1024,
+    heap_rebuild_factor=3.0,
+    output_dir="data/tinystories_bpe_10000",
+)
+PY
+```
+
+This writes `vocab.pkl`, `merges.pkl`, `vocab.json`, and `merges.txt` into
+`data/tinystories_bpe_10000/`. If `output_dir` is omitted, artifacts are written
+beside the input corpus in `<input_stem>_bpe_<vocab_size>/`.

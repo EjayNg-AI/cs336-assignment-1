@@ -90,7 +90,7 @@ tokenizer trainer.
 imported directly for larger corpora without replacing the original
 assignment-facing `train_bpe.py` module. It keeps the same return contract,
 special-token handling, and deterministic merge ordering while adding optional
-parallelism and lower-overhead internal token state.
+parallelism, lower-overhead internal token state, and artifact writing.
 
 **Methodology:** The enhanced trainer can split a corpus into byte ranges whose
 boundaries align to the first configured special token, then use
@@ -106,3 +106,33 @@ tie-breaking is computed from the underlying bytes. The implementation keeps
 the original incremental `pair_counts` and `pair_to_word_ids` strategy, and it
 periodically rebuilds the candidate heap when lazy-invalidated entries grow too
 large.
+
+After training, the enhanced trainer writes four artifacts to disk while still
+returning `(vocab, merges)` to the caller. The binary `vocab.pkl` and
+`merges.pkl` files preserve the exact Python objects. The human-inspectable
+`vocab.json` file lists each token ID with its byte values, hex string, Python
+`repr`, and UTF-8 text when valid. The human-inspectable `merges.txt` file lists
+merge rank, left token, right token, and merged token as tab-separated byte
+representations. If `output_dir` is omitted, the default output directory is
+created beside the input corpus as `<input_stem>_bpe_<vocab_size>/`.
+
+Example command for the full TinyStories training corpus:
+
+```sh
+uv run python -u - <<'PY'
+from cs336_basics.train_bpe_enhanced import train_bpe
+
+train_bpe(
+    input_path="data/TinyStoriesV2-GPT4-train.txt",
+    vocab_size=10_000,
+    special_tokens=["<|endoftext|>"],
+    num_workers=8,
+    chunk_bytes=64 * 1024 * 1024,
+    heap_rebuild_factor=3.0,
+    output_dir="data/tinystories_bpe_10000",
+)
+PY
+```
+
+This writes `vocab.pkl`, `merges.pkl`, `vocab.json`, and `merges.txt` under
+`data/tinystories_bpe_10000/`.

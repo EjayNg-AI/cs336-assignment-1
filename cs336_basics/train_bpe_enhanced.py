@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import heapq
+import json
 import math
 import multiprocessing as mp
 import os
+import pickle
+import time
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import BinaryIO
 
 import regex as re
@@ -22,6 +26,10 @@ BYTE_TOKENS = tuple(bytes([i]) for i in range(256))
 _DEFAULT_CHUNK_BYTES = 64 * 1024 * 1024
 _MIN_PARALLEL_BYTES = 16 * 1024 * 1024
 _MIN_PARALLEL_WORDS = 20_000
+_VOCAB_FILENAME = "vocab.pkl"
+_MERGES_FILENAME = "merges.pkl"
+_VOCAB_JSON_FILENAME = "vocab.json"
+_MERGES_TEXT_FILENAME = "merges.txt"
 
 
 @dataclass(frozen=True)
@@ -45,6 +53,72 @@ def _resolve_num_workers(num_workers: int | None) -> int:
     if num_workers < 1:
         raise ValueError("num_workers must be at least 1")
     return num_workers
+
+
+def _format_duration(elapsed_seconds: float) -> str:
+    minutes = int(elapsed_seconds // 60)
+    seconds = elapsed_seconds - minutes * 60
+    return f"{minutes} min {seconds:.2f} sec"
+
+
+def _default_output_dir(input_path: str | os.PathLike, vocab_size: int) -> Path:
+    path = Path(input_path)
+    return path.with_name(f"{path.stem}_bpe_{vocab_size}")
+
+
+def _decode_utf8(token: bytes) -> str | None:
+    try:
+        return token.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+
+
+def _vocab_json_entry(token_id: int, token: bytes) -> dict[str, object]:
+    return {
+        "id": token_id,
+        "byte_values": list(token),
+        "hex": token.hex(),
+        "repr": repr(token),
+        "utf8": _decode_utf8(token),
+    }
+
+
+def _write_vocab_json(vocab: dict[int, bytes], output_path: Path) -> None:
+    payload = {
+        "format": "cs336_basics.enhanced_bpe.v1",
+        "tokens": [_vocab_json_entry(token_id, vocab[token_id]) for token_id in sorted(vocab)],
+    }
+    with output_path.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+        f.write("\n")
+
+
+def _write_merges_text(merges: list[Pair], output_path: Path) -> None:
+    with output_path.open("w", encoding="utf-8") as f:
+        f.write("# cs336_basics enhanced BPE merges v1\n")
+        f.write("# rank\tleft_repr\tright_repr\tmerged_repr\n")
+        for rank, (left, right) in enumerate(merges):
+            f.write(f"{rank}\t{left!r}\t{right!r}\t{left + right!r}\n")
+
+
+def _write_training_artifacts(
+    vocab: dict[int, bytes],
+    merges: list[Pair],
+    output_dir: str | os.PathLike | None,
+    input_path: str | os.PathLike,
+    vocab_size: int,
+) -> None:
+    resolved_output_dir = Path(output_dir) if output_dir is not None else _default_output_dir(input_path, vocab_size)
+    resolved_output_dir.mkdir(parents=True, exist_ok=True)
+
+    with (resolved_output_dir / _VOCAB_FILENAME).open("wb") as f:
+        pickle.dump(vocab, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    with (resolved_output_dir / _MERGES_FILENAME).open("wb") as f:
+        pickle.dump(merges, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    _write_vocab_json(vocab, resolved_output_dir / _VOCAB_JSON_FILENAME)
+    _write_merges_text(merges, resolved_output_dir / _MERGES_TEXT_FILENAME)
 
 
 def _pretoken_counts_from_text(text: str, special_tokens: list[str]) -> Counter[bytes]:
@@ -241,7 +315,9 @@ def train_bpe(
     num_workers: int | None = None,
     chunk_bytes: int | None = None,
     heap_rebuild_factor: float = 3.0,
+    output_dir: str | os.PathLike | None = None,
 ) -> tuple[dict[int, bytes], list[Pair]]:
+    start_time = time.perf_counter()
     resolved_num_workers = _resolve_num_workers(num_workers)
 
     id_to_bytes: dict[int, bytes] = {i: BYTE_TOKENS[i] for i in range(256)}
@@ -334,6 +410,8 @@ def train_bpe(
             push_pair(pair)
         maybe_rebuild_heap()
 
+    _write_training_artifacts(id_to_bytes, merges, output_dir, input_path, vocab_size)
+    print(f"Enhanced BPE training completed in {_format_duration(time.perf_counter() - start_time)}.", flush=True)
     return id_to_bytes, merges
 
 

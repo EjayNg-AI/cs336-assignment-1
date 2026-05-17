@@ -9,8 +9,8 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `cs336_basics/__init__.py` defines package metadata behavior.
 - `cs336_basics/train_bpe.py` contains the BPE tokenizer training implementation added for the tokenizer training task.
 - `cs336_basics/train_bpe_enhanced.py` contains an additive large-corpus BPE trainer variant with parallel
-  pre-token counting, integer-token merge state, and heap rebuild maintenance. It leaves the original trainer
-  module unchanged and is not wired into the default test adapter unless explicitly imported.
+  pre-token counting, integer-token merge state, heap rebuild maintenance, and artifact writing. It leaves the
+  original trainer module unchanged and is not wired into the default test adapter unless explicitly imported.
 - Future submitted implementations for model layers, optimization, data loading, serialization, and training utilities should also be placed under `cs336_basics/`, split into modules that match the assignment component being implemented.
 
 `tests/adapters.py` is the bridge between the test suite and submitted code. Adapter functions should stay thin: they should import and call implementations from `cs336_basics/` rather than housing substantial implementation logic themselves.
@@ -45,6 +45,33 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `uv.lock` records the resolved dependency graph for reproducible environments.
 - `make_submission.sh` and `delete_zone_identifiers.sh` are helper scripts.
 - `download_data.sh` downloads the TinyStories and OpenWebText sample files listed in `README.md`, then unpacks the gzipped OpenWebText files into `data/`.
+
+## Generated BPE Artifacts
+
+When `cs336_basics.train_bpe_enhanced.train_bpe` is imported directly and run,
+it writes `vocab.pkl`, `merges.pkl`, `vocab.json`, and `merges.txt` to its
+configured `output_dir`. If no output directory is provided, it creates a
+directory beside the input corpus named `<input_stem>_bpe_<vocab_size>/`.
+`vocab.json` and `merges.txt` are intended for human inspection; the pickle
+files preserve the exact Python return objects.
+
+Example full TinyStories command:
+
+```sh
+uv run python -u - <<'PY'
+from cs336_basics.train_bpe_enhanced import train_bpe
+
+train_bpe(
+    input_path="data/TinyStoriesV2-GPT4-train.txt",
+    vocab_size=10_000,
+    special_tokens=["<|endoftext|>"],
+    num_workers=8,
+    chunk_bytes=64 * 1024 * 1024,
+    heap_rebuild_factor=3.0,
+    output_dir="data/tinystories_bpe_10000",
+)
+PY
+```
 
 ## Pretokenization Example
 
