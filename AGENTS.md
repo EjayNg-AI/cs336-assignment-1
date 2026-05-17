@@ -17,6 +17,12 @@ Tests in `tests/` define the expected behavior, and `tests/adapters.py` connects
 
 Comprehensive coding restrictions are documented in `requirements_for_code_produced.md`. All code generated that directly answers assignment questions must conform to those requirements, except for code used purely for error checking, unit tests, or logging.
 
+## Repository Structure Documentation
+
+The root file `repository_structure.md` documents the repository layout, including that submitted implementation code should be housed in `cs336_basics/` and connected to tests through `tests/adapters.py`.
+
+Whenever new submitted code is written, moved, or reorganized outside Jupyter notebooks, update `repository_structure.md` in the same change. Updates that only affect Jupyter notebooks are excluded from this requirement.
+
 ## Project Workflow
 
 This project uses `uv` for Python environment and dependency management. Common commands:
