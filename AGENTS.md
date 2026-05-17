@@ -23,6 +23,12 @@ The root file `repository_structure.md` documents the repository layout, includi
 
 Whenever new submitted code is written, moved, or reorganized outside Jupyter notebooks, update `repository_structure.md` in the same change. Updates that only affect Jupyter notebooks are excluded from this requirement.
 
+## Implementation Package Documentation
+
+The folder-level file `cs336_basics/README.md` documents the Python applications in `cs336_basics/`, including each application's description, purpose, and methodology.
+
+Whenever a new Python application is added to `cs336_basics/`, update `cs336_basics/README.md` in the same change so the package-level documentation remains current.
+
 ## Project Workflow
 
 This project uses `uv` for Python environment and dependency management. Common commands:
