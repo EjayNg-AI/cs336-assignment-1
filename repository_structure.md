@@ -41,6 +41,7 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `pyproject.toml` declares the package, Python version range, dependencies, pytest settings, and ruff settings.
 - `uv.lock` records the resolved dependency graph for reproducible environments.
 - `make_submission.sh` and `delete_zone_identifiers.sh` are helper scripts.
+- `download_data.sh` downloads the TinyStories and OpenWebText sample files listed in `README.md`, then unpacks the gzipped OpenWebText files into `data/`.
 
 ## Pretokenization Example
 
