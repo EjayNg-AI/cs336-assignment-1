@@ -107,14 +107,17 @@ the original incremental `pair_counts` and `pair_to_word_ids` strategy, and it
 periodically rebuilds the candidate heap when lazy-invalidated entries grow too
 large.
 
-After training, the enhanced trainer writes four artifacts to disk while still
+After training, the enhanced trainer writes five artifacts to disk while still
 returning `(vocab, merges)` to the caller. The binary `vocab.pkl` and
 `merges.pkl` files preserve the exact Python objects. The human-inspectable
 `vocab.json` file lists each token ID with its byte values, hex string, Python
 `repr`, and UTF-8 text when valid. The human-inspectable `merges.txt` file lists
 merge rank, left token, right token, and merged token as tab-separated byte
-representations. If `output_dir` is omitted, the default output directory is
-created beside the input corpus as `<input_stem>_bpe_<vocab_size>/`.
+representations. The human-inspectable `metadata.json` file records the
+requested and final vocabulary sizes, merge count, phase durations, merge-loop
+subphase durations, and run stats. If `output_dir` is omitted, the default
+output directory is created beside the input corpus as
+`<input_stem>_bpe_<vocab_size>/`.
 
 Example command for the full TinyStories training corpus:
 
@@ -134,5 +137,5 @@ train_bpe(
 PY
 ```
 
-This writes `vocab.pkl`, `merges.pkl`, `vocab.json`, and `merges.txt` under
-`data/tinystories_bpe_10000/`.
+This writes `vocab.pkl`, `merges.pkl`, `vocab.json`, `merges.txt`, and
+`metadata.json` under `data/tinystories_bpe_10000/`.

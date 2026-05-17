@@ -30,6 +30,7 @@ _VOCAB_FILENAME = "vocab.pkl"
 _MERGES_FILENAME = "merges.pkl"
 _VOCAB_JSON_FILENAME = "vocab.json"
 _MERGES_TEXT_FILENAME = "merges.txt"
+_METADATA_FILENAME = "metadata.json"
 
 
 @dataclass(frozen=True)
@@ -59,6 +60,10 @@ def _format_duration(elapsed_seconds: float) -> str:
     minutes = int(elapsed_seconds // 60)
     seconds = elapsed_seconds - minutes * 60
     return f"{minutes} min {seconds:.2f} sec"
+
+
+def _format_duration_map(durations: dict[str, float]) -> dict[str, str]:
+    return {name: _format_duration(duration) for name, duration in durations.items()}
 
 
 def _default_output_dir(input_path: str | os.PathLike, vocab_size: int) -> Path:
@@ -101,13 +106,19 @@ def _write_merges_text(merges: list[Pair], output_path: Path) -> None:
             f.write(f"{rank}\t{left!r}\t{right!r}\t{left + right!r}\n")
 
 
+def _write_training_metadata(metadata: dict[str, object], output_path: Path) -> None:
+    with output_path.open("w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2)
+        f.write("\n")
+
+
 def _write_training_artifacts(
     vocab: dict[int, bytes],
     merges: list[Pair],
     output_dir: str | os.PathLike | None,
     input_path: str | os.PathLike,
     vocab_size: int,
-) -> None:
+) -> Path:
     resolved_output_dir = Path(output_dir) if output_dir is not None else _default_output_dir(input_path, vocab_size)
     resolved_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -119,6 +130,7 @@ def _write_training_artifacts(
 
     _write_vocab_json(vocab, resolved_output_dir / _VOCAB_JSON_FILENAME)
     _write_merges_text(merges, resolved_output_dir / _MERGES_TEXT_FILENAME)
+    return resolved_output_dir
 
 
 def _pretoken_counts_from_text(text: str, special_tokens: list[str]) -> Counter[bytes]:
@@ -318,7 +330,14 @@ def train_bpe(
     output_dir: str | os.PathLike | None = None,
 ) -> tuple[dict[int, bytes], list[Pair]]:
     start_time = time.perf_counter()
+    phase_durations: dict[str, float] = {}
+
+    def record_phase(name: str, phase_start: float) -> None:
+        phase_durations[name] = time.perf_counter() - phase_start
+
+    phase_start = time.perf_counter()
     resolved_num_workers = _resolve_num_workers(num_workers)
+    input_file_bytes = os.path.getsize(input_path)
 
     id_to_bytes: dict[int, bytes] = {i: BYTE_TOKENS[i] for i in range(256)}
     vocab_values = set(id_to_bytes.values())
@@ -327,15 +346,27 @@ def train_bpe(
         if special_bytes not in vocab_values:
             id_to_bytes[len(id_to_bytes)] = special_bytes
             vocab_values.add(special_bytes)
+    record_phase("vocab_setup", phase_start)
 
+    phase_start = time.perf_counter()
     pretoken_counts = _pretoken_counts(input_path, special_tokens, resolved_num_workers, chunk_bytes)
+    record_phase("pretoken_counting", phase_start)
+    unique_pretoken_count = len(pretoken_counts)
+    total_pretoken_count = sum(pretoken_counts.values())
+
+    phase_start = time.perf_counter()
     word_counts: list[int] = []
     words: list[list[int]] = []
     for pretoken, count in pretoken_counts.items():
         word_counts.append(count)
         words.append(list(pretoken))
+    record_phase("word_materialization", phase_start)
 
+    phase_start = time.perf_counter()
     pair_counts, pair_to_word_ids = _build_initial_pair_state(words, word_counts, resolved_num_workers)
+    record_phase("initial_pair_state", phase_start)
+    initial_pair_count = len(pair_counts)
+
     heap: list[tuple[int, _ReverseBytesPair, TokenPair]] = []
 
     def push_pair(pair: TokenPair) -> None:
@@ -349,7 +380,10 @@ def train_bpe(
         for pair in pair_counts:
             push_pair(pair)
 
+    phase_start = time.perf_counter()
     rebuild_heap()
+    record_phase("initial_heap_build", phase_start)
+    initial_heap_size = len(heap)
 
     def pop_best_pair() -> TokenPair | None:
         while heap:
@@ -359,18 +393,32 @@ def train_bpe(
                 return pair
         return None
 
+    heap_rebuild_count = 0
+    heap_rebuild_seconds = 0.0
+
     def maybe_rebuild_heap() -> None:
+        nonlocal heap_rebuild_count, heap_rebuild_seconds
         if heap_rebuild_factor <= 0 or not pair_counts:
             return
         if len(heap) > heap_rebuild_factor * len(pair_counts):
+            rebuild_start = time.perf_counter()
             rebuild_heap()
+            heap_rebuild_seconds += time.perf_counter() - rebuild_start
+            heap_rebuild_count += 1
 
     merges: list[Pair] = []
+    merge_loop_start = time.perf_counter()
+    merge_pop_best_pair_seconds = 0.0
+    merge_word_update_seconds = 0.0
+    merge_heap_push_seconds = 0.0
     while len(id_to_bytes) < vocab_size:
+        pop_start = time.perf_counter()
         best_pair = pop_best_pair()
+        merge_pop_best_pair_seconds += time.perf_counter() - pop_start
         if best_pair is None:
             break
 
+        update_start = time.perf_counter()
         merged_token = id_to_bytes[best_pair[0]] + id_to_bytes[best_pair[1]]
         merged_token_id = len(id_to_bytes)
         merges.append((id_to_bytes[best_pair[0]], id_to_bytes[best_pair[1]]))
@@ -406,11 +454,53 @@ def train_bpe(
                 pair_to_word_ids.setdefault(pair, set()).add(word_id)
                 changed_pairs.add(pair)
 
+        merge_word_update_seconds += time.perf_counter() - update_start
+
+        heap_push_start = time.perf_counter()
         for pair in changed_pairs:
             push_pair(pair)
+        merge_heap_push_seconds += time.perf_counter() - heap_push_start
         maybe_rebuild_heap()
 
-    _write_training_artifacts(id_to_bytes, merges, output_dir, input_path, vocab_size)
+    record_phase("merge_loop", merge_loop_start)
+    merge_loop_subphase_durations = {
+        "pop_best_pair": merge_pop_best_pair_seconds,
+        "word_rewrite_and_pair_update": merge_word_update_seconds,
+        "changed_pair_heap_push": merge_heap_push_seconds,
+        "heap_rebuild": heap_rebuild_seconds,
+    }
+
+    phase_start = time.perf_counter()
+    resolved_output_dir = _write_training_artifacts(id_to_bytes, merges, output_dir, input_path, vocab_size)
+    record_phase("artifact_writing", phase_start)
+    phase_durations["total_training"] = time.perf_counter() - start_time
+
+    metadata = {
+        "format": "cs336_basics.enhanced_bpe.metadata.v1",
+        "input_path": os.fspath(input_path),
+        "output_dir": str(resolved_output_dir),
+        "requested_vocab_size": vocab_size,
+        "vocab_size": len(id_to_bytes),
+        "merge_count": len(merges),
+        "special_tokens": list(special_tokens),
+        "num_workers": resolved_num_workers,
+        "chunk_bytes": chunk_bytes,
+        "heap_rebuild_factor": heap_rebuild_factor,
+        "input_file_bytes": input_file_bytes,
+        "unique_pretoken_count": unique_pretoken_count,
+        "total_pretoken_count": total_pretoken_count,
+        "initial_pair_count": initial_pair_count,
+        "final_pair_count": len(pair_counts),
+        "initial_heap_size": initial_heap_size,
+        "final_heap_size": len(heap),
+        "heap_rebuild_count": heap_rebuild_count,
+        "phase_durations_seconds": phase_durations,
+        "phase_durations_formatted": _format_duration_map(phase_durations),
+        "merge_loop_subphase_durations_seconds": merge_loop_subphase_durations,
+        "merge_loop_subphase_durations_formatted": _format_duration_map(merge_loop_subphase_durations),
+    }
+    _write_training_metadata(metadata, resolved_output_dir / _METADATA_FILENAME)
+
     print(f"Enhanced BPE training completed in {_format_duration(time.perf_counter() - start_time)}.", flush=True)
     return id_to_bytes, merges
 
