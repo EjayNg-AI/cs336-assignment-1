@@ -46,7 +46,7 @@ position. The usage block at the bottom illustrates reading each resulting
 pre-token counting independently per chunk. That usage block is an adaptation
 template rather than submitted tokenizer-training logic.
 
-### `tokenizer.py`
+### `train_bpe.py`
 
 **Description:** Byte-pair encoding tokenizer training implementation.
 
