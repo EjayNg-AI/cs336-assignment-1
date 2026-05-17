@@ -8,6 +8,9 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 
 - `cs336_basics/__init__.py` defines package metadata behavior.
 - `cs336_basics/train_bpe.py` contains the BPE tokenizer training implementation added for the tokenizer training task.
+- `cs336_basics/train_bpe_enhanced.py` contains an additive large-corpus BPE trainer variant with parallel
+  pre-token counting, integer-token merge state, and heap rebuild maintenance. It leaves the original trainer
+  module unchanged and is not wired into the default test adapter unless explicitly imported.
 - Future submitted implementations for model layers, optimization, data loading, serialization, and training utilities should also be placed under `cs336_basics/`, split into modules that match the assignment component being implemented.
 
 `tests/adapters.py` is the bridge between the test suite and submitted code. Adapter functions should stay thin: they should import and call implementations from `cs336_basics/` rather than housing substantial implementation logic themselves.

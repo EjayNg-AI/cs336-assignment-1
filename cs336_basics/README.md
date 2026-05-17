@@ -80,3 +80,29 @@ vocabulary, subtracts the old affected pair counts, rewrites only affected word
 representations with `_merge_word`, adds the new pair counts, and pushes changed
 pairs back onto the heap. Training stops when the requested vocabulary size is
 reached or no mergeable pairs remain.
+
+### `train_bpe_enhanced.py`
+
+**Description:** Additive large-corpus variant of the byte-pair encoding
+tokenizer trainer.
+
+**Purpose:** Provides an enhanced `train_bpe` implementation that can be
+imported directly for larger corpora without replacing the original
+assignment-facing `train_bpe.py` module. It keeps the same return contract,
+special-token handling, and deterministic merge ordering while adding optional
+parallelism and lower-overhead internal token state.
+
+**Methodology:** The enhanced trainer can split a corpus into byte ranges whose
+boundaries align to the first configured special token, then use
+`multiprocessing` workers to count pre-tokens independently before reducing the
+worker-local counters in the parent process. If safe chunking is unavailable or
+the file is small, it falls back to single-process pre-tokenization for
+correctness.
+
+During the merge loop, pre-token representations use integer token IDs rather
+than Python `bytes` objects. The vocabulary still maps token IDs to bytes, so
+merge outputs are converted back to `tuple[bytes, bytes]` and lexicographic
+tie-breaking is computed from the underlying bytes. The implementation keeps
+the original incremental `pair_counts` and `pair_to_word_ids` strategy, and it
+periodically rebuilds the candidate heap when lazy-invalidated entries grow too
+large.
