@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Hard restriction
+
+Do not modify the README.md file in the repository root. README.md files in other folders can be modified.
+
 ## Repository Purpose
 
 This repository is the starter code for CS336 Assignment 1: Basics. It is an implementation project for core language-modeling systems: tokenization, model layers, transformer blocks, optimization, data loading, serialization, and training utilities.
