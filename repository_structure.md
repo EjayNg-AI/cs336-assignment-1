@@ -55,6 +55,9 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `run_openwebtext_bpe_enhanced.sh` runs the enhanced BPE trainer on the full OpenWebText training corpus with
   a 32,000-token vocabulary target, the `<|endoftext|>` special token, and artifact output under
   `data/openwebtext_bpe_32000/` by default.
+- `run_bpe_experiment_3_tokenization.sh` streams the full TinyStories and OpenWebText train/validation corpora
+  through `cs336_basics.tokenizer.Tokenizer` and writes flat NumPy `uint16` token-ID arrays plus metadata under
+  `data/bpe_tokenized_corpora/`.
 - `download_data.sh` downloads the TinyStories and OpenWebText sample files listed in `README.md`, then unpacks the gzipped OpenWebText files into `data/`.
 
 ## Generated BPE Artifacts
@@ -95,7 +98,7 @@ train_bpe(
 PY
 ```
 
-## BPE Sample Experiment Artifacts
+## BPE Tokenizer Experiment Artifacts
 
 `bpe_samples/` contains the retained outputs from the notebook's BPE tokenizer
 experiments:
@@ -114,10 +117,28 @@ experiments:
   token counts, compression ratios, and throughput estimates used in
   `BPE_tokenizer.ipynb`.
 
-Full-dataset Experiment 3 serialization artifacts are intentionally not kept:
-the partial `uint16`, JSON, and pickle outputs were deleted after the experiment
-was aborted because the expected full-corpus artifacts are multi-GB to tens of
-GB in size.
+Experiment 3 full-corpus serialization is produced by
+`run_bpe_experiment_3_tokenization.sh` rather than by executing notebook cells.
+The script uses `Tokenizer.from_files(...)` from `cs336_basics/tokenizer.py`,
+streams each input file with `encode_iterable`, and stores all generated
+outputs under the Git-ignored `data/` directory. The default output layout is:
+
+- `data/bpe_tokenized_corpora/tinystories/train.npy` and `train.json`
+  contain the TinyStories training split token IDs and metadata.
+- `data/bpe_tokenized_corpora/tinystories/valid.npy` and `valid.json`
+  contain the TinyStories validation split token IDs and metadata.
+- `data/bpe_tokenized_corpora/openwebtext/train.npy` and `train.json`
+  contain the OpenWebText training split token IDs and metadata.
+- `data/bpe_tokenized_corpora/openwebtext/valid.npy` and `valid.json`
+  contain the OpenWebText validation split token IDs and metadata.
+- `data/bpe_tokenized_corpora/manifest.json` collects the split metadata and
+  memory-mapped loading examples.
+
+The `.npy` files are flat one-dimensional `uint16` arrays designed for later
+language-model training with `np.load(..., mmap_mode="r")`. The sidecar JSON
+files record source paths, tokenizer artifact paths, token counts, compression
+ratios, throughput measurements, and a SHA-256 hash of the little endian
+`uint16` token stream.
 
 ## Pretokenization Example
 
