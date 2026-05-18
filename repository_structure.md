@@ -36,6 +36,7 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 ## Supporting Documentation
 
 - `README.md` describes setup and basic test execution.
+- `BPE_TOKENIZER.md` documents enhanced BPE trainer usage and retained tokenizer experiment artifacts.
 - `SETUP.md` gives broader setup guidance and assignment workflow notes.
 - `requirements_for_code_produced.md` lists coding restrictions that submitted code must follow.
 - `AGENTS.md` gives standing instructions for coding agents working in this repository.
