@@ -31,7 +31,7 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 
 ## Notebooks
 
-`BPE_tokenizer.ipynb` is an exploratory notebook for the tokenizer assignment. It may include explanation, experiments, and notebook-local versions of code for study. Notebook updates are not the source of submitted implementation behavior unless the same logic is also placed under `cs336_basics/` and connected through `tests/adapters.py`.
+`BPE_tokenizer.ipynb` is an exploratory notebook for the tokenizer assignment. It may include explanation, experiments, and notebook-local versions of code for study. Notebook updates are not the source of submitted implementation behavior unless the same logic is also placed under `cs336_basics/` and connected through `tests/adapters.py`. The notebook currently includes answers for BPE tokenizer sampling experiments, local compression-ratio measurements, a throughput estimate for tokenizing an 825 GB corpus, and a resource note explaining why full-corpus token-ID serialization is large.
 
 ## Supporting Documentation
 
@@ -48,6 +48,12 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `pyproject.toml` declares the package, Python version range, dependencies, pytest settings, and ruff settings.
 - `uv.lock` records the resolved dependency graph for reproducible environments.
 - `make_submission.sh` and `delete_zone_identifiers.sh` are helper scripts.
+- `run_tinystories_bpe_enhanced.sh` runs the enhanced BPE trainer on the full TinyStories training corpus with
+  a 10,000-token vocabulary target, the `<|endoftext|>` special token, and artifact output under
+  `data/tinystories_bpe_10000/` by default.
+- `run_openwebtext_bpe_enhanced.sh` runs the enhanced BPE trainer on the full OpenWebText training corpus with
+  a 32,000-token vocabulary target, the `<|endoftext|>` special token, and artifact output under
+  `data/openwebtext_bpe_32000/` by default.
 - `download_data.sh` downloads the TinyStories and OpenWebText sample files listed in `README.md`, then unpacks the gzipped OpenWebText files into `data/`.
 
 ## Generated BPE Artifacts
@@ -61,6 +67,14 @@ provided, it creates a directory beside the input corpus named
 the exact Python return objects. The metadata file records the requested and
 final vocabulary sizes, merge count, phase durations, merge-loop subphase
 durations, and run stats.
+
+The repository-level scripts write the following enhanced BPE training outputs
+by default:
+
+- `data/tinystories_bpe_10000/` contains the full TinyStories 10,000-token BPE
+  vocabulary, merges, and metadata from `run_tinystories_bpe_enhanced.sh`.
+- `data/openwebtext_bpe_32000/` contains the full OpenWebText 32,000-token BPE
+  vocabulary, merges, and metadata from `run_openwebtext_bpe_enhanced.sh`.
 
 Example full TinyStories command:
 
@@ -79,6 +93,30 @@ train_bpe(
 )
 PY
 ```
+
+## BPE Sample Experiment Artifacts
+
+`bpe_samples/` contains the retained outputs from the notebook's BPE tokenizer
+experiments:
+
+- `bpe_samples/tinystories/` contains 10 deterministic TinyStories document
+  samples and a `manifest.json` describing their source document indices and
+  byte counts.
+- `bpe_samples/openwebtext/` contains 10 deterministic OpenWebText document
+  samples and a `manifest.json` describing their source document indices and
+  byte counts.
+- `bpe_samples/ids/` contains JSON token-ID outputs for TinyStories samples
+  encoded with the TinyStories tokenizer, OpenWebText samples encoded with the
+  OpenWebText tokenizer, and OpenWebText samples encoded with the TinyStories
+  tokenizer.
+- `bpe_samples/experiment_1_2_summary.json` records the aggregate byte counts,
+  token counts, compression ratios, and throughput estimates used in
+  `BPE_tokenizer.ipynb`.
+
+Full-dataset Experiment 3 serialization artifacts are intentionally not kept:
+the partial `uint16`, JSON, and pickle outputs were deleted after the experiment
+was aborted because the expected full-corpus artifacts are multi-GB to tens of
+GB in size.
 
 ## Pretokenization Example
 

@@ -1,0 +1,250 @@
+{
+  "tinystories_with_tinystories_tokenizer": {
+    "sample_name": "tinystories",
+    "tokenizer_name": "tinystories",
+    "total_bytes": 7823,
+    "total_tokens": 1891,
+    "bytes_per_token": 4.136964569011106,
+    "elapsed_seconds": 0.004551473000901751,
+    "throughput_bytes_per_second": 1718784.2262164543,
+    "per_doc": [
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_00_doc_416413.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_00_ids.json",
+        "byte_count": 611,
+        "token_count": 149,
+        "bytes_per_token": 4.100671140939597
+      },
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_01_doc_431942.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_01_ids.json",
+        "byte_count": 746,
+        "token_count": 185,
+        "bytes_per_token": 4.032432432432432
+      },
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_02_doc_1034548.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_02_ids.json",
+        "byte_count": 708,
+        "token_count": 169,
+        "bytes_per_token": 4.189349112426036
+      },
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_03_doc_1436575.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_03_ids.json",
+        "byte_count": 1169,
+        "token_count": 283,
+        "bytes_per_token": 4.130742049469965
+      },
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_04_doc_1975238.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_04_ids.json",
+        "byte_count": 741,
+        "token_count": 175,
+        "bytes_per_token": 4.234285714285714
+      },
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_05_doc_2076349.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_05_ids.json",
+        "byte_count": 917,
+        "token_count": 218,
+        "bytes_per_token": 4.206422018348624
+      },
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_06_doc_2355983.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_06_ids.json",
+        "byte_count": 723,
+        "token_count": 176,
+        "bytes_per_token": 4.107954545454546
+      },
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_07_doc_2509433.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_07_ids.json",
+        "byte_count": 810,
+        "token_count": 201,
+        "bytes_per_token": 4.029850746268656
+      },
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_08_doc_2516107.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_08_ids.json",
+        "byte_count": 507,
+        "token_count": 127,
+        "bytes_per_token": 3.9921259842519685
+      },
+      {
+        "source_path": "bpe_samples/tinystories/tinystories_sample_09_doc_2617971.txt",
+        "ids_path": "bpe_samples/ids/tinystories_tinystories_sample_09_ids.json",
+        "byte_count": 891,
+        "token_count": 208,
+        "bytes_per_token": 4.283653846153846
+      }
+    ]
+  },
+  "openwebtext_with_openwebtext_tokenizer": {
+    "sample_name": "openwebtext",
+    "tokenizer_name": "openwebtext",
+    "total_bytes": 93516,
+    "total_tokens": 24778,
+    "bytes_per_token": 3.7741544918879653,
+    "elapsed_seconds": 0.034318894999159966,
+    "throughput_bytes_per_second": 2724912.9088302236,
+    "per_doc": [
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_00_doc_416413.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_00_ids.json",
+        "byte_count": 3474,
+        "token_count": 747,
+        "bytes_per_token": 4.650602409638554
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_01_doc_431942.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_01_ids.json",
+        "byte_count": 1473,
+        "token_count": 391,
+        "bytes_per_token": 3.7672634271099743
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_02_doc_1030618.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_02_ids.json",
+        "byte_count": 9550,
+        "token_count": 2279,
+        "bytes_per_token": 4.190434401053094
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_03_doc_1034548.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_03_ids.json",
+        "byte_count": 2036,
+        "token_count": 423,
+        "bytes_per_token": 4.8132387706855795
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_04_doc_1436575.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_04_ids.json",
+        "byte_count": 46322,
+        "token_count": 14323,
+        "bytes_per_token": 3.234099001605809
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_05_doc_1696137.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_05_ids.json",
+        "byte_count": 7276,
+        "token_count": 1722,
+        "bytes_per_token": 4.225319396051104
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_06_doc_1975238.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_06_ids.json",
+        "byte_count": 3254,
+        "token_count": 754,
+        "bytes_per_token": 4.315649867374005
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_07_doc_2076349.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_07_ids.json",
+        "byte_count": 6658,
+        "token_count": 1373,
+        "bytes_per_token": 4.849235251274581
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_08_doc_2141122.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_08_ids.json",
+        "byte_count": 10087,
+        "token_count": 2071,
+        "bytes_per_token": 4.870593915982617
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_09_doc_2355983.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_openwebtext_sample_09_ids.json",
+        "byte_count": 3386,
+        "token_count": 695,
+        "bytes_per_token": 4.871942446043166
+      }
+    ]
+  },
+  "openwebtext_with_tinystories_tokenizer": {
+    "sample_name": "openwebtext",
+    "tokenizer_name": "tinystories",
+    "total_bytes": 93516,
+    "total_tokens": 33213,
+    "bytes_per_token": 2.815644476560383,
+    "elapsed_seconds": 0.032491375000972766,
+    "throughput_bytes_per_second": 2878179.2090116288,
+    "per_doc": [
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_00_doc_416413.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_00_ids.json",
+        "byte_count": 3474,
+        "token_count": 1109,
+        "bytes_per_token": 3.1325518485121733
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_01_doc_431942.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_01_ids.json",
+        "byte_count": 1473,
+        "token_count": 514,
+        "bytes_per_token": 2.8657587548638133
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_02_doc_1030618.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_02_ids.json",
+        "byte_count": 9550,
+        "token_count": 2725,
+        "bytes_per_token": 3.5045871559633026
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_03_doc_1034548.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_03_ids.json",
+        "byte_count": 2036,
+        "token_count": 662,
+        "bytes_per_token": 3.0755287009063443
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_04_doc_1436575.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_04_ids.json",
+        "byte_count": 46322,
+        "token_count": 18865,
+        "bytes_per_token": 2.455446594222104
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_05_doc_1696137.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_05_ids.json",
+        "byte_count": 7276,
+        "token_count": 2245,
+        "bytes_per_token": 3.24097995545657
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_06_doc_1975238.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_06_ids.json",
+        "byte_count": 3254,
+        "token_count": 980,
+        "bytes_per_token": 3.320408163265306
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_07_doc_2076349.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_07_ids.json",
+        "byte_count": 6658,
+        "token_count": 1891,
+        "bytes_per_token": 3.520888418826018
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_08_doc_2141122.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_08_ids.json",
+        "byte_count": 10087,
+        "token_count": 3060,
+        "bytes_per_token": 3.2964052287581698
+      },
+      {
+        "source_path": "bpe_samples/openwebtext/openwebtext_sample_09_doc_2355983.txt",
+        "ids_path": "bpe_samples/ids/openwebtext_tinystories_sample_09_ids.json",
+        "byte_count": 3386,
+        "token_count": 1162,
+        "bytes_per_token": 2.9139414802065406
+      }
+    ]
+  },
+  "pile_estimate_from_openwebtext_samples": {
+    "throughput_bytes_per_second": 2878179.2090116288,
+    "pile_825gb_decimal_seconds": 286639.552331179,
+    "pile_825gib_binary_seconds": 307776.8757506235
+  }
+}

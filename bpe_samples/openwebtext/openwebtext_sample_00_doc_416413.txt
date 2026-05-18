@@ -1,0 +1,17 @@
+While Facebook-owned Oculus VR is the company known for virtual reality headsets, it won’t be first to market with a consumer VR device. HTC, which has partnered with game developer Valve, will launch the HTC Vive VR headset this fall.
+
+Aimed at high-end PC gamers, the device will launch months before any other competing device, as Sony’s Morpheus VR headset for PlayStation 4 won’t debut until 2016. Multiple companies—from Oculus VR to Microsoft to Samsung—have VR devices in the works for mobile, PC, and consoles, but none of them have announced a launch date for a consumer product earlier than HTC or Sony.
+
+HTC and Valve each bring valuable assets to their VR partnership—HTC has the manufacturing experience, and Valve has a large existing gamer fanbase.‎ “We’ve been excited about VR, but we don’t have the software or brand recognition to go out and reach gamers,” Jeff Gattis, executive director of global marketing for connected products at HTC, says. “We have a history of seeking out partnerships where there’s a gap in our portfolio. Valve was looking for someone to bring their hardware to fruition, so it was a nice fit between what we do well and what they do well.”
+
+Valve has over 100 million PC gamers who use its Steam digital delivery service to purchase PC games. But it’s not set up as a global hardware manufacturing company like HTC.
+
+HTC was originally a white-label mobile phone manufacturer, but in 2011 the company began marketing products under its own brand. Peter Warman, CEO of video game research firm Newzoo, believes this background makes HTC a very suitable partner for jointly developed products.
+
+“Contrary to Samsung, Sony, Apple, and Microsoft, HTC is less likely to want to own their own VR product themselves,” Warman says. “The HTC/Valve product is high-end, which is the only option going forward. VR products will remain niche for years to come and the people that invest in VR hardware will want the best. Only when VR becomes mainstream will low-end VR products have a business, comparable to the situation with tablets nowadays, although with a lot smaller addressable market. The majority of Americans ages 10-65 (53%) are not aware of VR products.”
+
+But a majority of Valve’s 100 million Steam PC gamers are well aware of Oculus VR, Sony Morpheus, Samsung Galaxy VR, Crescent Bay, and now HTC Vive. That’s the audience HTC is targeting. The company is also counting on Valve’s developer relationships to support the new VR device with quality video games at launch. Valve and HTC met with game developers from around the globe at the Game Developers Conference in San Francisco in March to encourage game makers to create new VR experiences for the technology.
+
+Warman says being first to market in high-end VR puts a lot of pressure on content, which is why the companies are distributing the software development kit (SDK) for free this spring. Gattis says by summer fans who don’t want to wait for the consumer version this fall will be able to get the HTC Vive Developers Edition. Because many of the first VR-buying consumers are early adopters, Warman says it will be hard for other VR companies to convince these gamers to switch to a new expensive VR system within a year of purchasing the HTC Vive.
+
+“On the other hand, Valve and HTC are taking a risk and could be called a failure if initial sales are lower than expected by press and investors,” Warman says.

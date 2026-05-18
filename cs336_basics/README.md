@@ -158,3 +158,39 @@ PY
 
 This writes `vocab.pkl`, `merges.pkl`, `vocab.json`, `merges.txt`, and
 `metadata.json` under `data/tinystories_bpe_10000/`.
+
+#### New local findings from full-corpus enhanced BPE runs
+
+The following are new findings based on running the enhanced BPE trainer locally
+on a laptop with the following provided specs: Nvidia RTX 4060 GPU, 32 MB RAM,
+and Intel Core i7 CPU. The runs used `num_workers=8`,
+`chunk_bytes=64 * 1024 * 1024`, `heap_rebuild_factor=3.0`, and the
+`<|endoftext|>` special token. These BPE training runs did not use the GPU: the
+trainer is a CPU/Python multiprocessing pipeline and does not dispatch work to
+CUDA, so GPU power is not relevant for these measurements.
+
+| Corpus | Input | Vocab target | Final vocab | Merges | Unique pre-tokens | Total pre-tokens | Total time | Slowest phase |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| TinyStories | `data/TinyStoriesV2-GPT4-train.txt` | 10,000 | 10,000 | 9,743 | 59,933 | 536,592,168 | 0 min 52.50 sec | `pretoken_counting`: 0 min 50.18 sec |
+| OpenWebText | `data/owt_train.txt` | 32,000 | 32,000 | 31,743 | 6,601,892 | 2,471,753,092 | 17 min 48.67 sec | `merge_loop`: 13 min 3.97 sec |
+
+For TinyStories, the longest vocabulary tokens were tied at 15 bytes:
+`" accomplishment"`, `" disappointment"`, and `" responsibility"`. Within its
+merge loop, the slowest subphase was `word_rewrite_and_pair_update`, which took
+0 min 1.34 sec.
+
+For OpenWebText, the longest vocabulary tokens were tied at 64 bytes:
+`b'----------------------------------------------------------------'` and a repeated mojibake byte pattern
+`b'\xc3\x83\xc3\x82'` repeated 16 times. Within its merge loop, the slowest
+subphase was `word_rewrite_and_pair_update`, which took 6 min 43.39 sec.
+Pretoken counting took 4 min 21.42 sec.
+
+The TinyStories and OpenWebText tokenizers differ mainly because the corpora and
+vocabulary targets are very different. TinyStories produced a narrower
+story-domain vocabulary with child-story words such as `granddaughter`,
+`butterflies`, `strawberries`, and the longest tokens above. OpenWebText
+produced a broader and noisier web-text vocabulary with long punctuation runs,
+encoding artifacts, and general web vocabulary such as `telecommunications`,
+`cryptocurrencies`, and `unconstitutional`. OpenWebText also had far more unique
+pre-tokens, shifting the bottleneck from pre-token counting to merge-loop pair
+updates and heap maintenance.

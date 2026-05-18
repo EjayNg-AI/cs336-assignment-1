@@ -1,0 +1,35 @@
+Plants around the world are constantly under attack — often with big implications for humans. In the 1960s, millions of elm trees in Britain, France and the U.S. fell victim to Dutch elm disease, which clogs the vessels that carry life-giving water to the trees’ leaves. Starting in the late 1980s, Brazil’s thriving chocolate industry crumbled when witches’ broom disease devastated its cacao trees. Lately, banana growers have become increasingly concerned about Panama disease, which is spreading rapidly and threatening to wipe out their crops. The attackers, like many of the infectious agents that harm humans, are tiny but devastating fungi, bacteria and other microbial parasites.
+
+Now, global change is giving these parasites an edge, helping spread deadly diseases around the globe. Desperate to find a way to fight back, some scientists have turned their attention to a special type of soil known as “disease-suppressive soil.” The plants that live in it seem to magically remain relatively free of disease, even if disease-causing parasites are present. These scientists hope to improve understanding of this phenomenon so they can use it to help make agriculture more sustainable.
+
+Perfect Combination
+
+In the same way forts have armies to protect themselves against invaders, plants growing in disease-suppressive soil have beneficial bacteria to defend themselves against parasites attacking them from the ground. While all soil has microbes living in it, disease-suppressive soil has certain types of microbes that can fight off disease.
+
+Not all soils are disease suppressive, and those that are weren’t always that way. In many cases, soils develop protective qualities only after they host a single plant species and that species has experienced years of disease outbreak. It appears that, much as our bodies gain defenses in the form of antibodies after we get sick from the illnesses such as chicken pox or measles, soils can gain defenses in the form of the perfect combination of microbes that fend off future attacks from the same pathogen.
+
+Just as each human has a unique set of fingerprints, each type of soil has a unique signature based on the kinds and numbers of microbes present.The phenomenon was observed as early as 1931. Since then, scientists have tried to understand which specific microbes can defend plants against their attackers and how they do so. Today, advances in microbiological and sequencing technology are enabling researchers to tease apart the complexities of the microbes that live in soils — which organisms are they, exactly, and just what do they do? It turns out that, just as each human has a unique set of fingerprints, each type of soil has a unique signature based on the kinds and numbers of microbes present.
+
+A team of researchers based at Washington State University has focused on the suppression of take-all disease in wheat for decades. Take-all, which destroys grasses’ roots, is caused by a fungal parasite. Even before this group started its research in the 1960s, it was clear that growing wheat continuously in an area that had experienced take-all would lead to a decline in the disease. Plant pathologist David Weller, a member of the research team, determined that these suppressive soils had greater amounts of a type of bacteria called pseudomonads. When research geneticist Linda Thomashow joined the group in 1985, she used molecular methods to learn more about pseudomonads and how they produce antibiotics to fight off pathogen.
+
+In the 1990s, Linda Kinkel and Neil Anderson, plant pathologists at the University of Minnesota, went looking for a microbial explanation for an inexplicable decline in scab, a disease that disfigures crops like potatoes or radishes with dark, splotchy growths, in a potato field in Minnesota. Kinkel and her colleagues found that the soil contained greater amounts of a certain type of bacteria called Streptomyces than soil that does not suppress disease. These bacteria produce antibiotics used as weapons against parasites.
+
+Characterizing such “microbial signatures” is just the first step toward further harnessing soil microbes to prevent disease.
+
+Understanding the soil microbes that protect plants from disease can be a matter of life and death — not just for the plants but for us as well. “Technology provides a static picture,” says Kinkel, “but these systems are so not static. … We need to understand not just which species are present, but how they are interacting.” Translating their discoveries about disease-suppressive soil into management solutions, she says, will require a shift in thinking. While many researchers are searching for a “silver bullet” microbe that can be added to soil and fight off disease, the system is much more complex than that.
+
+Food Security
+
+Understanding the soil microbes that protect plants from disease can be a matter of life and death — not just for the plants but for us as well. Human population is growing, and plants are key to ensuring our future food security. Enlisting the help of microbes found naturally in the soil is critical, Thomashow explains, because “the agricultural systems are weakest in parts of the world where population growth is the greatest and the people can’t afford chemicals.”
+
+“It’s not this pie in the sky,” Kinkel says. “[These soils provide] long-term, stable, virtually complete disease suppression without any pesticide input.”
+
+So what do we need to bring disease-suppressive soil into management practices more widely?
+
+If scientists can learn more about how disease-suppressing microbes are functioning in this soil and how suppression originates, they can inform management practices to better protect plants against disease while reducing the need for artificial chemicals.
+
+However, Kinkel points out, for that to happen smoothly, communication will be key. Scientists may figure out ways to introduce disease resistance into soil, but that won’t do any good if their recommendations don’t mesh well with practices farmers use in real life such as rotating crops. “I may know things [growers] don’t, but they know a lot of things I don’t,” says Kinkel. In other words, successfully applying what has been learned about disease-suppressive soils to agriculture will require both scientists and farmers to listen to each other.
+
+As Thomashow puts it, “We have a big toolbox, but we are not yet employing all the tools we have.”
+
+Editor’s note: Kayleigh O’Keeffe produced this feature as a participant in the Ensia Mentor Program. Her mentor for the project was Hillary Rosner.
