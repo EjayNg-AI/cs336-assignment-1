@@ -54,7 +54,4 @@ documents and encoded sample IDs are stored under `bpe_samples/`:
 Measured sample compression ratios were 4.137 bytes/token for the TinyStories
 tokenizer on TinyStories samples, 3.774 bytes/token for the OpenWebText
 tokenizer on OpenWebText samples, and 2.816 bytes/token for the TinyStories
-tokenizer on OpenWebText samples. Experiment 3 full-dataset serialization was
-aborted because the expected full-corpus `uint16`, JSON, and pickle outputs are
-resource intensive; no full-dataset Experiment 3 artifacts are retained under
-`bpe_samples/`.
+tokenizer on OpenWebText samples.
