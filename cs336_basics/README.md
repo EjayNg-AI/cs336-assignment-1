@@ -81,6 +81,25 @@ representations with `_merge_word`, adds the new pair counts, and pushes changed
 pairs back onto the heap. Training stops when the requested vocabulary size is
 reached or no mergeable pairs remain.
 
+### `tokenizer.py`
+
+**Description:** Byte-pair encoding tokenizer encoder/decoder implementation.
+
+**Purpose:** Provides the `Tokenizer` class used by `tests/adapters.py` to
+encode Unicode text into BPE token IDs and decode token IDs back into text from
+a supplied `dict[int, bytes]` vocabulary and ordered merge list.
+
+**Methodology:** The tokenizer copies the provided vocabulary, appends missing
+special tokens as UTF-8 byte sequences, and builds reverse lookup tables for
+byte tokens and merge ranks. Encoding first separates configured special tokens
+with longest-match precedence, then applies the GPT-2-style regex
+pre-tokenizer to ordinary text. Each pre-token starts as single-byte tokens and
+is repeatedly merged by the lowest-ranked adjacent BPE pair until no configured
+merge applies. `encode_iterable` keeps a small rolling buffer so chunks can be
+encoded lazily without splitting possible regex tokens or special-token
+prefixes. Decoding concatenates token bytes and decodes UTF-8 with replacement
+for malformed byte sequences.
+
 ### `train_bpe_enhanced.py`
 
 **Description:** Additive large-corpus variant of the byte-pair encoding
