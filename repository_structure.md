@@ -9,8 +9,8 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `cs336_basics/__init__.py` defines package metadata behavior.
 - `cs336_basics/train_bpe.py` contains the BPE tokenizer training implementation added for the tokenizer training task.
 - `cs336_basics/tokenizer.py` contains the BPE tokenizer encoder/decoder implementation, including
-  GPT-2-style pre-tokenization, merge application, special-token handling, streaming encoding, and UTF-8
-  replacement decoding.
+  GPT-2-style pre-tokenization, integer-ID merge application, special-token handling, context-preserving
+  streaming encoding, and UTF-8 replacement decoding.
 - `cs336_basics/train_bpe_enhanced.py` contains an additive large-corpus BPE trainer variant with parallel
   pre-token counting, integer-token merge state, heap rebuild maintenance, artifact writing, and training
   metadata emission. It leaves the original trainer module unchanged and is not wired into the default test

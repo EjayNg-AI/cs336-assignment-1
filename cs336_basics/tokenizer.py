@@ -14,6 +14,7 @@ PRETOKEN_RE = re.compile(PAT)
 BYTE_TOKENS = tuple(bytes([i]) for i in range(256))
 
 Pair = tuple[bytes, bytes]
+TokenSegment = tuple[int, int, str | None]
 
 
 class Tokenizer:
@@ -114,6 +115,14 @@ class Tokenizer:
             self.special_token_ids[special_token] = token_id
 
         self.merge_ranks = {pair: rank for rank, pair in enumerate(merges)}
+        self.byte_token_ids = tuple(self.token_to_id[token] for token in BYTE_TOKENS)
+        self.merge_ranks_by_id: dict[tuple[int, int], int] = {}
+        self.merge_output_by_pair_id: dict[tuple[int, int], int] = {}
+        for pair, rank in self.merge_ranks.items():
+            left, right = pair
+            pair_ids = (self.token_to_id[left], self.token_to_id[right])
+            self.merge_ranks_by_id[pair_ids] = rank
+            self.merge_output_by_pair_id[pair_ids] = self.token_to_id[left + right]
         self._encode_cache: dict[bytes, tuple[int, ...]] = {}
         self._max_cache_size = 50_000
 
@@ -144,9 +153,10 @@ class Tokenizer:
             if not chunk:
                 continue
             buffer += chunk
-            flush_index = self._stream_flush_index(buffer)
+            segments = list(self._token_segments(buffer))
+            flush_index = self._stream_flush_index_from_segments(buffer, segments)
             if flush_index > 0:
-                yield from self._encode_text(buffer[:flush_index])
+                yield from self._encode_prefix_with_context(buffer, flush_index, segments)
                 buffer = buffer[flush_index:]
         if buffer:
             yield from self._encode_text(buffer)
@@ -172,18 +182,38 @@ class Tokenizer:
         for match in PRETOKEN_RE.finditer(text):
             yield from self._encode_pretoken(match.group(0).encode("utf-8"))
 
+    def _encode_prefix_with_context(
+        self,
+        text: str,
+        end_index: int,
+        segments: Iterable[TokenSegment] | None = None,
+    ) -> Iterator[int]:
+        if segments is None:
+            segments = self._token_segments(text)
+
+        for start, end, special_token in segments:
+            if end <= end_index:
+                if special_token is None:
+                    yield from self._encode_pretoken(text[start:end].encode("utf-8"))
+                else:
+                    yield self.special_token_ids[special_token]
+            elif start < end_index:
+                raise ValueError("stream flush boundary split a token")
+            else:
+                break
+
     def _encode_pretoken(self, pretoken: bytes) -> tuple[int, ...]:
         cached = self._encode_cache.get(pretoken)
         if cached is not None:
             return cached
 
-        tokens = [BYTE_TOKENS[byte] for byte in pretoken]
+        tokens = [self.byte_token_ids[byte] for byte in pretoken]
         while len(tokens) > 1:
-            best_pair: Pair | None = None
+            best_pair: tuple[int, int] | None = None
             best_rank: int | None = None
             for i in range(len(tokens) - 1):
                 pair = (tokens[i], tokens[i + 1])
-                rank = self.merge_ranks.get(pair)
+                rank = self.merge_ranks_by_id.get(pair)
                 if rank is not None and (best_rank is None or rank < best_rank):
                     best_pair = pair
                     best_rank = rank
@@ -191,8 +221,8 @@ class Tokenizer:
             if best_pair is None:
                 break
 
-            merged_token = best_pair[0] + best_pair[1]
-            merged_tokens: list[bytes] = []
+            merged_token = self.merge_output_by_pair_id[best_pair]
+            merged_tokens: list[int] = []
             i = 0
             while i < len(tokens):
                 if i + 1 < len(tokens) and tokens[i] == best_pair[0] and tokens[i + 1] == best_pair[1]:
@@ -203,39 +233,45 @@ class Tokenizer:
                     i += 1
             tokens = merged_tokens
 
-        token_ids = tuple(self.token_to_id[token] for token in tokens)
+        token_ids = tuple(tokens)
         if len(self._encode_cache) >= self._max_cache_size:
             self._encode_cache.clear()
         self._encode_cache[pretoken] = token_ids
         return token_ids
 
     def _stream_flush_index(self, text: str) -> int:
-        spans = list(self._token_spans(text))
-        if not spans:
+        return self._stream_flush_index_from_segments(text, list(self._token_segments(text)))
+
+    def _stream_flush_index_from_segments(self, text: str, segments: list[TokenSegment]) -> int:
+        if not segments:
             return 0
 
-        keep_start = spans[-1][0]
+        keep_start = segments[-1][0]
         if self._max_special_token_length > 1:
             keep_start = min(keep_start, max(0, len(text) - self._max_special_token_length + 1))
 
-        for start, end in spans:
+        for start, end, _ in segments:
             if start < keep_start < end:
                 return start
         return keep_start
 
     def _token_spans(self, text: str) -> Iterator[tuple[int, int]]:
+        for start, end, _ in self._token_segments(text):
+            yield start, end
+
+    def _token_segments(self, text: str) -> Iterator[TokenSegment]:
         if self._special_re is None:
             for match in PRETOKEN_RE.finditer(text):
-                yield match.span()
+                yield match.start(), match.end(), None
             return
 
         start = 0
         for special_match in self._special_re.finditer(text):
             if special_match.start() > start:
                 for match in PRETOKEN_RE.finditer(text, start, special_match.start()):
-                    yield match.span()
-            yield special_match.span()
+                    yield match.start(), match.end(), None
+            yield special_match.start(), special_match.end(), special_match.group(0)
             start = special_match.end()
         if start < len(text):
             for match in PRETOKEN_RE.finditer(text, start):
-                yield match.span()
+                yield match.start(), match.end(), None
