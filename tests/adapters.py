@@ -29,7 +29,7 @@ def run_linear(
         Float[Tensor, "... d_out"]: The transformed output of your linear module.
     """
 
-    from cs336_basics.nn_linear_embedding_rmsnorm import Linear
+    from cs336_basics.nn_linear_embedding_rope_rmsnorm import Linear
 
     linear = Linear(d_in, d_out, device=weights.device, dtype=weights.dtype)
     linear.load_state_dict({"W": weights})
@@ -55,7 +55,7 @@ def run_embedding(
         Float[Tensor, "... d_model"]: Batch of embeddings returned by your Embedding layer.
     """
 
-    from cs336_basics.nn_linear_embedding_rmsnorm import Embedding
+    from cs336_basics.nn_linear_embedding_rope_rmsnorm import Embedding
 
     embedding = Embedding(vocab_size, d_model, device=weights.device, dtype=weights.dtype)
     embedding.load_state_dict({"weight": weights})
@@ -218,7 +218,10 @@ def run_rope(
     Returns:
         Float[Tensor, " ... sequence_length d_k"]: Tensor with RoPEd input.
     """
-    raise NotImplementedError
+    from cs336_basics.nn_linear_embedding_rope_rmsnorm import RotaryPositionalEmbedding
+
+    rope = RotaryPositionalEmbedding(theta, d_k, max_seq_len, device=in_query_or_key.device)
+    return rope(in_query_or_key, token_positions)
 
 
 def run_transformer_block(
@@ -396,7 +399,7 @@ def run_rmsnorm(
         Float[Tensor,"... d_model"]: Tensor of with the same shape as `in_features` with the output of running
         RMSNorm of the `in_features`.
     """
-    from cs336_basics.nn_linear_embedding_rmsnorm import RMSNorm
+    from cs336_basics.nn_linear_embedding_rope_rmsnorm import RMSNorm
 
     rmsnorm = RMSNorm(d_model, eps=eps, device=weights.device, dtype=weights.dtype)
     rmsnorm.load_state_dict({"weight": weights})

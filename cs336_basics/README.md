@@ -100,16 +100,16 @@ encoded lazily without splitting possible regex tokens or special-token
 prefixes. Decoding concatenates token bytes and decodes UTF-8 with replacement
 for malformed byte sequences.
 
-### `nn_linear_embedding_rmsnorm.py`
+### `nn_linear_embedding_rope_rmsnorm.py`
 
 **Description:** Custom neural-network modules for the transformer architecture
 assignment.
 
-**Purpose:** Provides the `Linear`, `Embedding`, and `RMSNorm` classes used by
-`tests/adapters.py` for the first model-layer tasks. The module avoids
-`torch.nn.Linear`, `torch.nn.Embedding`, built-in normalization modules, and
-`torch.nn.functional` helpers while preserving PyTorch module and parameter
-registration behavior.
+**Purpose:** Provides the `Linear`, `Embedding`, `RotaryPositionalEmbedding`,
+and `RMSNorm` classes used by `tests/adapters.py` for the first model-layer
+tasks. The module avoids `torch.nn.Linear`, `torch.nn.Embedding`, built-in
+normalization modules, and `torch.nn.functional` helpers while preserving
+PyTorch module, parameter, and buffer registration behavior.
 
 **Methodology:** `Linear` stores a single weight parameter `W` with shape
 `(out_features, in_features)`, initializes it with the assignment's truncated
@@ -117,8 +117,11 @@ normal distribution, and applies the transformation with `x @ W.T` so all
 leading input dimensions are preserved. `Embedding` stores a parameter named
 `weight` with shape `(num_embeddings, embedding_dim)`, initializes it from the
 assignment's embedding distribution, and returns rows selected by integer token
-IDs through direct tensor indexing. `RMSNorm` stores a learnable scale parameter
-named `weight`, initializes it to ones, upcasts input activations to
+IDs through direct tensor indexing. `RotaryPositionalEmbedding` precomputes
+fixed cosine and sine buffers for the configured RoPE positions and rotates
+even/odd query-key coordinate pairs selected by `token_positions`, preserving
+arbitrary leading batch dimensions. `RMSNorm` stores a learnable scale
+parameter named `weight`, initializes it to ones, upcasts input activations to
 `torch.float32` for the mean-square normalization calculation, rescales by the
 root mean square over the final dimension, and returns the result in the
 original input dtype.

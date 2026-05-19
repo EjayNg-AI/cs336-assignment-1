@@ -44,6 +44,46 @@ class Embedding(torch.nn.Module):
         return self.weight[token_ids]
 
 
+class RotaryPositionalEmbedding(torch.nn.Module):
+    def __init__(
+        self,
+        theta: float,
+        d_k: int,
+        max_seq_len: int,
+        device: torch.device | None = None,
+    ) -> None:
+        super().__init__()
+        if d_k % 2 != 0:
+            raise ValueError("d_k must be even for RoPE pairwise rotations")
+
+        self.theta = theta
+        self.d_k = d_k
+        self.max_seq_len = max_seq_len
+
+        positions = torch.arange(max_seq_len, device=device, dtype=torch.float32)
+        dimension_indices = torch.arange(0, d_k, 2, device=device, dtype=torch.float32)
+        angles = positions[:, None] / (theta ** (dimension_indices / d_k))
+        self.register_buffer("cos", torch.cos(angles), persistent=False)
+        self.register_buffer("sin", torch.sin(angles), persistent=False)
+
+    def forward(self, x: torch.Tensor, token_positions: torch.Tensor) -> torch.Tensor:
+        in_dtype = x.dtype
+        token_positions = token_positions.to(device=self.cos.device, dtype=torch.long)
+        cos = self.cos[token_positions].to(device=x.device)
+        sin = self.sin[token_positions].to(device=x.device)
+
+        while cos.ndim < x.ndim:
+            cos = cos.unsqueeze(-3)
+            sin = sin.unsqueeze(-3)
+
+        x_even = x[..., 0::2]
+        x_odd = x[..., 1::2]
+        rotated_even = x_even * cos - x_odd * sin
+        rotated_odd = x_even * sin + x_odd * cos
+        result = torch.stack((rotated_even, rotated_odd), dim=-1).flatten(-2)
+        return result.to(in_dtype)
+
+
 class RMSNorm(torch.nn.Module):
     def __init__(
         self,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from cs336_basics.nn_linear_embedding_rmsnorm import Linear
+from cs336_basics.nn_linear_embedding_rope_rmsnorm import Linear
 
 
 def swiglu_d_ff(d_model: int) -> int:
