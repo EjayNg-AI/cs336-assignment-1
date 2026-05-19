@@ -29,7 +29,7 @@ def run_linear(
         Float[Tensor, "... d_out"]: The transformed output of your linear module.
     """
 
-    from cs336_basics.nn_linear_and_embedding_modules import Linear
+    from cs336_basics.nn_linear_embedding_rmsnorm import Linear
 
     linear = Linear(d_in, d_out, device=weights.device, dtype=weights.dtype)
     linear.load_state_dict({"W": weights})
@@ -55,7 +55,7 @@ def run_embedding(
         Float[Tensor, "... d_model"]: Batch of embeddings returned by your Embedding layer.
     """
 
-    from cs336_basics.nn_linear_and_embedding_modules import Embedding
+    from cs336_basics.nn_linear_embedding_rmsnorm import Embedding
 
     embedding = Embedding(vocab_size, d_model, device=weights.device, dtype=weights.dtype)
     embedding.load_state_dict({"weight": weights})
@@ -386,7 +386,11 @@ def run_rmsnorm(
         Float[Tensor,"... d_model"]: Tensor of with the same shape as `in_features` with the output of running
         RMSNorm of the `in_features`.
     """
-    raise NotImplementedError
+    from cs336_basics.nn_linear_embedding_rmsnorm import RMSNorm
+
+    rmsnorm = RMSNorm(d_model, eps=eps, device=weights.device, dtype=weights.dtype)
+    rmsnorm.load_state_dict({"weight": weights})
+    return rmsnorm(in_features)
 
 
 def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:

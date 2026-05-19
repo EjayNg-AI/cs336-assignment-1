@@ -11,10 +11,10 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `cs336_basics/tokenizer.py` contains the BPE tokenizer encoder/decoder implementation, including
   GPT-2-style pre-tokenization, integer-ID merge application, special-token handling, context-preserving
   streaming encoding, and UTF-8 replacement decoding.
-- `cs336_basics/nn_linear_and_embedding_modules.py` contains the custom neural-network `Linear` and
-  `Embedding` modules for the transformer architecture task, using explicit `torch.nn.Parameter`
-  tensors, assignment-specified truncated-normal initialization, matrix multiplication, and direct
-  embedding-table indexing.
+- `cs336_basics/nn_linear_embedding_rmsnorm.py` contains the custom neural-network `Linear`,
+  `Embedding`, and `RMSNorm` modules for the transformer architecture task, using explicit
+  `torch.nn.Parameter` tensors, assignment-specified initialization, matrix multiplication, direct
+  embedding-table indexing, and manual root-mean-square normalization.
 - `cs336_basics/train_bpe_enhanced.py` contains an additive large-corpus BPE trainer variant with parallel
   pre-token counting, integer-token merge state, heap rebuild maintenance, artifact writing, and training
   metadata emission. It leaves the original trainer module unchanged and is not wired into the default test
@@ -37,7 +37,7 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 
 `BPE_tokenizer.ipynb` is an exploratory notebook for the tokenizer assignment. It may include explanation, experiments, and notebook-local versions of code for study. Notebook updates are not the source of submitted implementation behavior unless the same logic is also placed under `cs336_basics/` and connected through `tests/adapters.py`. The notebook currently includes answers for BPE tokenizer sampling experiments, local compression-ratio measurements, a throughput estimate for tokenizing an 825 GB corpus, and a resource note explaining why full-corpus token-ID serialization is large.
 
-`transformer_llm_architecture.ipynb` is an exploratory and explanatory notebook for transformer language-model architecture components. It includes the assignment text for parameter initialization, linear layers, and embedding layers, plus a code cell mirroring the submitted `Linear` and `Embedding` implementations from `cs336_basics/nn_linear_and_embedding_modules.py` and a detailed explanation of their parameter data structures and tensor operations.
+`transformer_llm_architecture.ipynb` is an exploratory and explanatory notebook for transformer language-model architecture components. It includes the assignment text for parameter initialization, linear layers, embedding layers, and RMS normalization, plus a code cell mirroring the submitted `Linear`, `Embedding`, and `RMSNorm` implementations from `cs336_basics/nn_linear_embedding_rmsnorm.py` and a detailed explanation of their parameter data structures and tensor operations.
 
 ## Supporting Documentation
 
