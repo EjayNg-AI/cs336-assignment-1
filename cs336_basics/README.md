@@ -123,6 +123,24 @@ named `weight`, initializes it to ones, upcasts input activations to
 root mean square over the final dimension, and returns the result in the
 original input dtype.
 
+### `nn_feedforward.py`
+
+**Description:** Manual feed-forward components for transformer blocks.
+
+**Purpose:** Provides the SiLU activation helper and `SwiGLU` module used by
+`tests/adapters.py` for the position-wise feed-forward network task. The module
+keeps the implementation in submitted package code instead of in the adapter or
+notebook-only cells.
+
+**Methodology:** `stable_sigmoid` computes the logistic sigmoid from elementary
+tensor operations using `exp(-abs(x))`, avoiding the unstable branch of the
+naive formula for large positive or negative inputs. `silu` multiplies the input
+by this sigmoid. `SwiGLU` composes three custom bias-free `Linear` projections:
+`w1` and `w3` project from `d_model` to `d_ff`, their outputs are combined as
+`silu(w1(x)) * w3(x)`, and `w2` projects the gated hidden activations back to
+`d_model`. The constructor accepts an explicit `d_ff`; when omitted, it computes
+`8/3 * d_model` rounded to the nearest multiple of 64.
+
 ### `train_bpe_enhanced.py`
 
 **Description:** Additive large-corpus variant of the byte-pair encoding
