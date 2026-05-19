@@ -74,6 +74,11 @@ You may use normal `torch.nn.Module` methods, including:
 10. `state_dict()`
 11. `load_state_dict()`
 
+Initializer exception:
+
+1. `torch.nn.init.trunc_normal_` may be used for assignment-required truncated
+   normal parameter initialization.
+
 ### Forbidden `torch.nn` and `torch.nn.functional` Objects
 
 You may not use any other `torch.nn` class, function, or object.
@@ -90,7 +95,8 @@ In particular, do not use:
 8. `torch.nn.BatchNorm1d`, `torch.nn.BatchNorm2d`, `torch.nn.LayerNorm`, or `torch.nn.GroupNorm`
 9. `torch.nn.CrossEntropyLoss`, `torch.nn.NLLLoss`, `torch.nn.MSELoss`, or any other loss class
 10. `torch.nn.Flatten`, `torch.nn.Identity`, or other convenience modules
-11. `torch.nn.init` or any initializer from `torch.nn.init`
+11. `torch.nn.init` or any initializer from `torch.nn.init`, except for
+    `torch.nn.init.trunc_normal_` as allowed above
 12. `torch.nn.utils`, including but not limited to:
     - `torch.nn.utils.clip_grad_norm_`
     - `torch.nn.utils.clip_grad_value_`
