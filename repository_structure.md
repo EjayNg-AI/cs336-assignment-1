@@ -20,6 +20,11 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
   network for transformer blocks. It composes the custom `Linear` module, uses an explicit stable
   sigmoid from elementary tensor operations, supports an explicit `d_ff`, and otherwise computes
   the SwiGLU hidden width as `8/3 * d_model` rounded to the nearest multiple of 64.
+- `cs336_basics/nn_attention.py` contains the manual softmax helper, batched scaled dot-product
+  attention, and causal multi-head self-attention module for the transformer architecture task. It
+  composes the custom `Linear` and `RotaryPositionalEmbedding` modules, applies causal masking with
+  `True` meaning "allowed to attend", splits projections into heads without prebuilt attention
+  helpers, and optionally applies RoPE to queries and keys only.
 - `cs336_basics/train_bpe_enhanced.py` contains an additive large-corpus BPE trainer variant with parallel
   pre-token counting, integer-token merge state, heap rebuild maintenance, artifact writing, and training
   metadata emission. It leaves the original trainer module unchanged and is not wired into the default test
@@ -42,7 +47,7 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 
 `BPE_tokenizer.ipynb` is an exploratory notebook for the tokenizer assignment. It may include explanation, experiments, and notebook-local versions of code for study. Notebook updates are not the source of submitted implementation behavior unless the same logic is also placed under `cs336_basics/` and connected through `tests/adapters.py`. The notebook currently includes answers for BPE tokenizer sampling experiments, local compression-ratio measurements, a throughput estimate for tokenizing an 825 GB corpus, and a resource note explaining why full-corpus token-ID serialization is large.
 
-`transformer_llm_architecture.ipynb` is an exploratory and explanatory notebook for transformer language-model architecture components. It includes the assignment text for parameter initialization, linear layers, embedding layers, RoPE, RMS normalization, and the pre-norm transformer block feed-forward network. Its code cells mirror the submitted `Linear`, `Embedding`, `RotaryPositionalEmbedding`, and `RMSNorm` implementations from `cs336_basics/nn_linear_embedding_rope_rmsnorm.py` and the submitted SiLU/SwiGLU implementation from `cs336_basics/nn_feedforward.py`, with a detailed explanation of the earlier layer parameter data structures and tensor operations.
+`transformer_llm_architecture.ipynb` is an exploratory and explanatory notebook for transformer language-model architecture components. It includes the assignment text for parameter initialization, linear layers, embedding layers, RoPE, RMS normalization, the pre-norm transformer block feed-forward network, and multi-head self-attention. Its code cells mirror the submitted `Linear`, `Embedding`, `RotaryPositionalEmbedding`, and `RMSNorm` implementations from `cs336_basics/nn_linear_embedding_rope_rmsnorm.py`, the submitted SiLU/SwiGLU implementation from `cs336_basics/nn_feedforward.py`, and the submitted softmax/attention implementation from `cs336_basics/nn_attention.py`, with explanatory cells for the layer parameter data structures and tensor operations.
 
 ## Supporting Documentation
 

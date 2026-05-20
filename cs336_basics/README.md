@@ -144,6 +144,27 @@ by this sigmoid. `SwiGLU` composes three custom bias-free `Linear` projections:
 `d_model`. The constructor accepts an explicit `d_ff`; when omitted, it computes
 `8/3 * d_model` rounded to the nearest multiple of 64.
 
+### `nn_attention.py`
+
+**Description:** Manual attention components for transformer blocks.
+
+**Purpose:** Provides the softmax helper, batched scaled dot-product attention
+function, and causal multi-head self-attention module used by
+`tests/adapters.py` for the multi-head attention task. The module keeps the
+attention implementation in submitted package code and avoids prebuilt
+softmax, attention, and `torch.nn.functional` helpers.
+
+**Methodology:** `softmax` subtracts the maximum value along the requested
+dimension before exponentiating, then normalizes by the sum along that same
+dimension. `scaled_dot_product_attention` computes `q @ k.transpose(-2, -1)`,
+scales by `sqrt(d_k)`, applies an optional boolean mask with `True` entries
+kept and `False` entries filled with `-inf`, softmaxes over the key dimension,
+and multiplies by the value tensor. `CausalMultiHeadSelfAttention` composes four
+custom bias-free `Linear` projections, reshapes projected features into
+`num_heads` independent heads, applies RoPE to query and key heads when
+configured, uses a lower-triangular causal mask, concatenates the per-head
+outputs, and applies the output projection.
+
 ### `train_bpe_enhanced.py`
 
 **Description:** Additive large-corpus variant of the byte-pair encoding
