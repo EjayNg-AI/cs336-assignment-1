@@ -1,0 +1,5 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/cs336_bpe_rs",
+]

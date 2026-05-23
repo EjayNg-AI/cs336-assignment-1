@@ -29,6 +29,10 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
   pre-token counting, integer-token merge state, heap rebuild maintenance, artifact writing, and training
   metadata emission. It leaves the original trainer module unchanged and is not wired into the default test
   adapter unless explicitly imported.
+- `crates/cs336_bpe_rs/` contains an additive Rust CLI/library implementation of the enhanced byte-level BPE
+  trainer and tokenizer. It is designed as a correctness-equivalent sibling of `train_bpe_enhanced.py` and
+  `tokenizer.py`, writes language-neutral `vocab.json`, `merges.txt`, and `metadata.json` artifacts, and is
+  validated through parity tests rather than being wired into the default Python assignment adapters.
 - Future submitted implementations for model layers, optimization, data loading, serialization, and training utilities should also be placed under `cs336_basics/`, split into modules that match the assignment component being implemented.
 
 `tests/adapters.py` is the bridge between the test suite and submitted code. Adapter functions should stay thin: they should import and call implementations from `cs336_basics/` rather than housing substantial implementation logic themselves.
@@ -39,6 +43,9 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 
 - `tests/test_train_bpe.py` checks BPE tokenizer training correctness, special-token handling, and speed.
 - `tests/test_tokenizer.py` checks tokenizer encoding and decoding behavior.
+- `tests/test_rust_bpe_parity.py` checks that the Rust enhanced BPE trainer and encoder match the existing
+  Python enhanced trainer/tokenizer on edge corpora and streaming encode scenarios. These tests are skipped
+  when Cargo is unavailable.
 - `tests/test_model.py`, `tests/test_nn_utils.py`, `tests/test_optimizer.py`, `tests/test_data.py`, and `tests/test_serialization.py` cover the remaining assignment systems.
 - `tests/fixtures/` contains reference vocabularies, merge files, sample corpora, model weights, and other test data.
 - `tests/_snapshots/` contains saved numerical snapshots used by tests.
@@ -53,6 +60,10 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 
 - `README.md` describes setup and basic test execution.
 - `BPE_TOKENIZER.md` documents enhanced BPE trainer usage and retained tokenizer experiment artifacts.
+- `RUST_BPE_IMPLEMENTATION.md` explains the additive Rust enhanced BPE trainer/encoder implementation,
+  including its module layout, training pipeline, encoder behavior, parity contract, and validation commands.
+- `crates/cs336_bpe_rs/README.md` documents the Rust BPE trainer/encoder CLI, generated artifact formats, and
+  validation commands.
 - `SETUP.md` gives broader setup guidance and assignment workflow notes.
 - `requirements_for_code_produced.md` lists coding restrictions that submitted code must follow.
 - `AGENTS.md` gives standing instructions for coding agents working in this repository.
@@ -64,6 +75,10 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 
 - `pyproject.toml` declares the package, Python version range, dependencies, pytest settings, and ruff settings.
 - `uv.lock` records the resolved dependency graph for reproducible environments.
+- `Cargo.toml` declares the root Cargo workspace for Rust support.
+- `Cargo.lock` records the resolved Rust dependency graph for the `cs336_bpe_rs` crate.
+- `crates/cs336_bpe_rs/Cargo.toml` declares the Rust BPE crate, library, and `cs336-bpe-train` /
+  `cs336-bpe-encode` binaries.
 - `make_submission.sh` and `delete_zone_identifiers.sh` are helper scripts.
 - `run_tinystories_bpe_enhanced.sh` runs the enhanced BPE trainer on the full TinyStories training corpus with
   a 10,000-token vocabulary target, the `<|endoftext|>` special token, and artifact output under

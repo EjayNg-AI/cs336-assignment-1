@@ -23,6 +23,7 @@ ENV/
 # Build and packaging outputs
 build/
 dist/
+target/
 *.egg-info/
 .eggs/
 *.egg

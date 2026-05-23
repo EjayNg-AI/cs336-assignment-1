@@ -1,0 +1,29 @@
+[package]
+name = "cs336_bpe_rs"
+version = "0.1.0"
+edition = "2021"
+description = "Rust implementation of the CS336 enhanced byte-level BPE trainer and tokenizer"
+
+[lib]
+name = "cs336_bpe_rs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cs336-bpe-train"
+path = "src/bin/train_bpe.rs"
+
+[[bin]]
+name = "cs336-bpe-encode"
+path = "src/bin/encode_bpe.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+fancy-regex = "0.16"
+rayon = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3"
