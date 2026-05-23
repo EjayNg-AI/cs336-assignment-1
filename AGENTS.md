@@ -60,7 +60,6 @@ Consult these files when they are relevant to the change:
 - Whenever new submitted code is written, moved, or reorganized outside Jupyter notebooks, update `repository_structure.md` in the same change.
 - Updates that only affect Jupyter notebooks do not require a `repository_structure.md` update.
 - Whenever a new Python application is added to `cs336_basics/`, update `cs336_basics/README.md` in the same change so the package-level documentation remains current.
-- Do not update the root `README.md`; it is explicitly off limits.
 
 ## Testing and Validation
 
