@@ -259,3 +259,23 @@ encoding artifacts, and general web vocabulary such as `telecommunications`,
 `cryptocurrencies`, and `unconstitutional`. OpenWebText also had far more unique
 pre-tokens, shifting the bottleneck from pre-token counting to merge-loop pair
 updates and heap maintenance.
+
+#### Rust sibling implementation
+
+The repository also includes an additive Rust implementation of the enhanced
+BPE trainer and encoder under `crates/cs336_bpe_rs/`. It is documented in
+`RUST_BPE_IMPLEMENTATION.md` and `crates/cs336_bpe_rs/README.md`.
+
+The Rust implementation is designed to match `train_bpe_enhanced.py` and
+`tokenizer.py` behavior while remaining outside the `cs336_basics` submitted
+Python package. It is not wired into `tests/adapters.py`. It writes
+language-neutral `vocab.json`, `merges.txt`, and `metadata.json` artifacts, but
+does not write Python pickle artifacts or NumPy `.npy` token arrays.
+
+A completed full TinyStories Rust run using the same 10,000-token target,
+`<|endoftext|>` special token, 8 workers, 64 MiB chunks, and
+`heap_rebuild_factor=3.0` is stored under
+`data/rust/tinystories_bpe_10000/`. On that run, the Rust trainer took about
+30.10 sec wall clock versus 85.57 sec recorded by the current Python enhanced
+metadata for `data/tinystories_bpe_10000/`. The Rust `merges.txt` matched the
+Python output byte-for-byte, while `vocab.json` matched after JSON parsing.

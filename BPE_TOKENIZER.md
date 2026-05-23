@@ -37,6 +37,72 @@ Local full-corpus runs with `num_workers=8`, 64 MiB chunks, and
 These BPE trainer runs are CPU/Python multiprocessing jobs; they do not use the
 GPU.
 
+## Run the Rust BPE trainer
+
+The repository also includes an additive Rust implementation of the enhanced
+byte-level BPE trainer and encoder under `crates/cs336_bpe_rs/`. It is a
+correctness-equivalent sibling of the Python enhanced trainer/tokenizer, not a
+replacement for `tests/adapters.py` or the submitted Python assignment path.
+
+Build the optimized Rust binary before timing a large run:
+
+```sh
+cargo build --release -p cs336_bpe_rs
+```
+
+Example full TinyStories training command:
+
+```sh
+target/release/cs336-bpe-train \
+  --input data/TinyStoriesV2-GPT4-train.txt \
+  --vocab-size 10000 \
+  --special-token '<|endoftext|>' \
+  --num-workers 8 \
+  --chunk-bytes 67108864 \
+  --heap-rebuild-factor 3.0 \
+  --output-dir data/rust/tinystories_bpe_10000
+```
+
+The Rust trainer writes language-neutral artifacts only:
+
+- `vocab.json`
+- `merges.txt`
+- `metadata.json`
+
+It intentionally does not write Python `vocab.pkl` / `merges.pkl` files or
+NumPy `.npy` token-ID arrays. The Rust encoder can consume the generated JSON
+and text artifacts:
+
+```sh
+target/release/cs336-bpe-encode \
+  --vocab data/rust/tinystories_bpe_10000/vocab.json \
+  --merges data/rust/tinystories_bpe_10000/merges.txt \
+  --special-token '<|endoftext|>' \
+  --input data/TinyStoriesV2-GPT4-valid.txt \
+  --output-ids-json data/rust/tinystories_bpe_10000/valid_ids.json
+```
+
+A completed full TinyStories Rust run is stored under
+`data/rust/tinystories_bpe_10000/`, including `run_timing.txt`. Compared with
+the current Python enhanced metadata in `data/tinystories_bpe_10000/`, the
+matching Rust run produced:
+
+| Implementation | Total time |
+| --- | ---: |
+| Python enhanced trainer | 85.57 sec |
+| Rust trainer metadata | 30.07 sec |
+| Rust `/usr/bin/time` wall clock | 30.10 sec |
+
+The Rust run was about 2.84x faster overall for this TinyStories configuration.
+The full run matched the Python trainer statistics: 10,000 final vocabulary
+items, 9,743 merges, 59,933 unique pre-tokens, and 536,592,168 total
+pre-tokens. `merges.txt` was byte-for-byte identical to the Python output, and
+`vocab.json` was equal after parsing as JSON. Raw `vocab.json` bytes differ
+because Python and Rust serialize JSON strings differently.
+
+See `RUST_BPE_IMPLEMENTATION.md` for implementation details, parity notes, and
+the full phase-level timing table.
+
 ## BPE tokenizer experiment artifacts
 
 `BPE_tokenizer.ipynb` contains the tokenizer experiment writeups. The sampled

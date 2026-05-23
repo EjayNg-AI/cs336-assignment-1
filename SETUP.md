@@ -6,6 +6,8 @@
 - **Git** (to clone the repository)
 - **curl** (for installing `uv`)
 - **wget** and **gunzip** (only needed if you download the full training datasets)
+- **Rust/Cargo** (optional, only needed for the additive Rust BPE trainer and
+  encoder under `crates/cs336_bpe_rs/`)
 
 ---
 
@@ -60,6 +62,10 @@ The environment includes:
 - **regex** (advanced regex)
 - **tiktoken**, **tqdm**, **wandb** (ML utilities)
 
+Rust dependencies are managed separately by Cargo. They are not installed by
+`uv sync`; Cargo resolves them from `Cargo.lock` when you run a Rust build or
+test command.
+
 ---
 
 ## Step 4: Verify Setup by Running Tests
@@ -82,6 +88,18 @@ To run a specific test file:
 uv run pytest tests/test_model.py      # Model component tests
 uv run pytest tests/test_tokenizer.py  # Tokenizer tests
 uv run pytest tests/test_optimizer.py  # AdamW optimizer tests
+```
+
+If Cargo is installed, the optional Rust BPE parity tests can be run with:
+
+```bash
+uv run pytest tests/test_rust_bpe_parity.py
+```
+
+The Rust crate's native test suite can be run with:
+
+```bash
+cargo test -p cs336_bpe_rs
 ```
 
 ---
@@ -156,6 +174,45 @@ uv lock --upgrade          # Intentionally upgrade all packages and rewrite uv.l
 For this assignment, prefer the checked-in dependencies. Only use `uv add` or
 `uv lock --upgrade` if you deliberately want to change project dependencies and
 understand the assignment's library-use restrictions.
+
+## Optional Rust BPE Commands
+
+The Rust BPE trainer and encoder are additive tools. They are useful for
+large-corpus BPE experiments and parity checks, but they are not wired into
+`tests/adapters.py`.
+
+Build optimized Rust binaries:
+
+```bash
+cargo build --release -p cs336_bpe_rs
+```
+
+Train the TinyStories BPE tokenizer into a Rust-specific data subdirectory:
+
+```bash
+target/release/cs336-bpe-train \
+  --input data/TinyStoriesV2-GPT4-train.txt \
+  --vocab-size 10000 \
+  --special-token '<|endoftext|>' \
+  --num-workers 8 \
+  --chunk-bytes 67108864 \
+  --heap-rebuild-factor 3.0 \
+  --output-dir data/rust/tinystories_bpe_10000
+```
+
+Encode a file with the Rust tokenizer:
+
+```bash
+target/release/cs336-bpe-encode \
+  --vocab data/rust/tinystories_bpe_10000/vocab.json \
+  --merges data/rust/tinystories_bpe_10000/merges.txt \
+  --special-token '<|endoftext|>' \
+  --input data/TinyStoriesV2-GPT4-valid.txt \
+  --output-ids-json data/rust/tinystories_bpe_10000/valid_ids.json
+```
+
+More detail is documented in `RUST_BPE_IMPLEMENTATION.md` and
+`crates/cs336_bpe_rs/README.md`.
 
 ---
 

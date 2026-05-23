@@ -878,6 +878,98 @@ Known intentional differences:
 - Raw `vocab.json` bytes may differ because Python and Rust serialize JSON
   differently, but the parsed JSON object is expected to match.
 
+## Full TinyStories Run
+
+The Rust trainer has been run on the full TinyStories training corpus:
+
+```text
+data/TinyStoriesV2-GPT4-train.txt
+```
+
+The run used the same configuration as the existing Python enhanced trainer
+artifact in `data/tinystories_bpe_10000/`:
+
+```sh
+target/release/cs336-bpe-train \
+  --input data/TinyStoriesV2-GPT4-train.txt \
+  --vocab-size 10000 \
+  --special-token '<|endoftext|>' \
+  --num-workers 8 \
+  --chunk-bytes 67108864 \
+  --heap-rebuild-factor 3.0 \
+  --output-dir data/rust/tinystories_bpe_10000
+```
+
+The release binary was built before timing:
+
+```sh
+cargo build --release -p cs336_bpe_rs
+```
+
+Generated Rust artifacts are stored in:
+
+```text
+data/rust/tinystories_bpe_10000/
+|-- merges.txt
+|-- metadata.json
+|-- run_timing.txt
+`-- vocab.json
+```
+
+Timing summary:
+
+| Implementation | Total time |
+| --- | ---: |
+| Python enhanced trainer | `85.57s` |
+| Rust trainer metadata | `30.07s` |
+| Rust `/usr/bin/time` wall clock | `30.10s` |
+
+Using the Python metadata total and the Rust wall-clock time, the Rust trainer
+was about `2.84x` faster overall and saved about `55.5s`.
+
+Phase-level timing comparison:
+
+| Phase | Python | Rust | Speedup |
+| --- | ---: | ---: | ---: |
+| Pretoken counting | `82.05s` | `29.44s` | `2.79x` |
+| Word materialization | `0.013s` | `0.0067s` | `1.88x` |
+| Initial pair state | `0.160s` | `0.030s` | `5.30x` |
+| Initial heap build | `0.00090s` | `0.00027s` | `3.34x` |
+| Merge loop | `3.24s` | `0.59s` | `5.52x` |
+| Artifact writing | `0.095s` | `0.010s` | `9.27x` |
+
+The `/usr/bin/time -v` run reported:
+
+```text
+Elapsed (wall clock) time: 0:30.10
+User time: 211.56s
+System time: 2.93s
+CPU utilization: 712%
+Maximum resident set size: 573388 KB
+```
+
+The Rust and Python full TinyStories runs produced matching training statistics:
+
+| Field | Value |
+| --- | ---: |
+| Input bytes | `2227753162` |
+| Requested vocab size | `10000` |
+| Final vocab size | `10000` |
+| Merge count | `9743` |
+| Unique pretokens | `59933` |
+| Total pretokens | `536592168` |
+| Initial pair count | `2108` |
+| Final pair count | `47278` |
+| Heap rebuild count | `8` |
+
+Artifact parity for the full TinyStories run:
+
+- `merges.txt` is byte-for-byte identical to the Python enhanced trainer output.
+- `vocab.json` is equal after parsing as JSON.
+- Raw `vocab.json` bytes differ because Python and Rust serialize JSON strings
+  differently.
+- Rust does not produce `vocab.pkl`, `merges.pkl`, or `.npy` token-ID arrays.
+
 ## Validation Commands
 
 Run Rust formatting and tests:
