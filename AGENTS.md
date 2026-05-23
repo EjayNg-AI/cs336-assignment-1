@@ -1,10 +1,5 @@
 # AGENTS.md
 
-## Non-Negotiable Restriction
-
-- Do not modify the repository-root `README.md`.
-- `README.md` files in subdirectories may be modified when the repository instructions below call for it.
-
 ## Repository Purpose
 
 This repository is the starter code for CS336 Assignment 1: Basics. It is an
@@ -43,7 +38,6 @@ Consult these files when they are relevant to the change:
 - `BPE_TOKENIZER.md`: notes for the optional enhanced BPE trainer and retained tokenizer experiment artifacts.
 - `CHANGELOG.md`: upstream assignment/code changes.
 - `uv-docs/`: offline `uv` reference documentation.
-- Root `README.md`: setup and basic test execution reference only; do not edit it.
 
 ## Submitted Implementation Code
 
