@@ -27,9 +27,13 @@ submitted implementations to the test suite.
 
 Consult these files when they are relevant to the change:
 
+- `README.md`: concise project overview, setup, data requirements, common commands, documentation map, project status, and license summary.
 - `requirements_for_code_produced.md`: comprehensive coding restrictions for submitted assignment code, including allowed and forbidden library usage.
-- `repository_structure.md`: repository layout, where submitted implementation code belongs, and when this structure document must be updated.
-- `cs336_basics/README.md`: package-level documentation for Python applications in `cs336_basics/`, including each application's description, purpose, and methodology.
+- `repository_structure.md`: maintained repository map covering implementation code, tests, scripts, data artifacts, and documentation.
+- Folder-level `README.md` files: local purpose, important files, setup assumptions, commands, inputs/outputs, implementation status, and known gaps for important folders such as `cs336_basics/`, `tests/`, `data/`, `bpe_samples/`, and `crates/`.
+- `cs336_basics/README.md`: package-level documentation for submitted Python implementation modules, current implementation status, development rules, and related commands.
+- `tests/README.md`: test-suite overview, adapter status, fixture/snapshot guidance, and focused test commands.
+- `data/README.md`: local data download expectations, ignored generated artifacts, tokenizer artifact conventions, and token-ID array notes.
 - `tests/adapters.py`: the bridge between the tests and implementations in `cs336_basics/`; adapter functions should stay thin.
 - `tests/`: unit tests that define the required behavior.
 - `pyproject.toml`: Python version range, dependencies, pytest settings, and ruff settings.
@@ -57,9 +61,11 @@ Consult these files when they are relevant to the change:
 
 ## Documentation Maintenance
 
-- Whenever new submitted code is written, moved, or reorganized outside Jupyter notebooks, update `repository_structure.md` in the same change.
-- Updates that only affect Jupyter notebooks do not require a `repository_structure.md` update.
-- Whenever a new Python application is added to `cs336_basics/`, update `cs336_basics/README.md` in the same change so the package-level documentation remains current.
+- Whenever new submitted code is written, moved, or reorganized outside Jupyter notebooks, update `repository_structure.md` and the relevant folder-level `README.md` files in the same change.
+- Whenever repository changes alter setup, data requirements, common commands, scripts, generated artifacts, project status, source layout, test coverage, or contributor workflows, update the affected documentation in the same change.
+- When a new Python implementation module is added to `cs336_basics/`, update `cs336_basics/README.md`; when adapter coverage changes, update `tests/README.md`; when data scripts or artifact formats change, update `data/README.md` and any relevant BPE documentation.
+- Updates that only affect Jupyter notebooks do not require `repository_structure.md` updates unless notebook changes also alter submitted code, tracked artifacts, scripts, data expectations, or documented workflows.
+- Prefer folder-level `README.md` files for documentation tied to a specific directory. Add or keep root-level Markdown files only when the repository root is clearly the best location for broader reference material.
 
 ## Testing and Validation
 

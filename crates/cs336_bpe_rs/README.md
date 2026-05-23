@@ -1,10 +1,25 @@
 # cs336_bpe_rs
 
-Rust implementation of the repository's enhanced byte-level BPE trainer and tokenizer.
+Rust implementation of the repository's enhanced byte-level BPE trainer and
+tokenizer.
 
-This crate is an additive sibling of the Python implementation in `cs336_basics/`.
-It is intended to match the Python enhanced trainer/tokenizer semantics before
-optimizing for speed or memory usage.
+This crate is an additive sibling of the Python implementation in
+[`../../cs336_basics/`](../../cs336_basics/). It is intended to match the Python
+enhanced trainer/tokenizer semantics before optimizing for speed or memory
+usage. It is not the submitted Python assignment path wired through
+[`../../tests/adapters.py`](../../tests/adapters.py).
+
+## Layout
+
+- [`src/lib.rs`](src/lib.rs): public library surface.
+- [`src/bin/train_bpe.rs`](src/bin/train_bpe.rs): `cs336-bpe-train` CLI.
+- [`src/bin/encode_bpe.rs`](src/bin/encode_bpe.rs): `cs336-bpe-encode` CLI.
+- [`src/trainer/`](src/trainer/): BPE training state, counts, heap, merge, and
+  artifact writing.
+- [`src/encoder/`](src/encoder/): tokenizer loading, merge application, and
+  streaming encoding.
+- [`src/pretokenizer.rs`](src/pretokenizer.rs): GPT-style pre-tokenization.
+- [`Cargo.toml`](Cargo.toml): crate metadata, library, binaries, and dependencies.
 
 ## Binaries
 
@@ -59,3 +74,6 @@ Run Python parity tests:
 ```sh
 uv run pytest tests/test_rust_bpe_parity.py
 ```
+
+More implementation detail is in
+[`../../RUST_BPE_IMPLEMENTATION.md`](../../RUST_BPE_IMPLEMENTATION.md).

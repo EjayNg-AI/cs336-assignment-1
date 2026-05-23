@@ -58,13 +58,26 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 
 ## Supporting Documentation
 
-- `README.md` describes setup and basic test execution.
+- `README.md` is the concise project entry point with status, setup, data, common commands, and the documentation map.
+- `SETUP.md` gives broader setup guidance, test commands, data-download steps, optional Rust commands, and troubleshooting notes.
 - `BPE_TOKENIZER.md` documents enhanced BPE trainer usage and retained tokenizer experiment artifacts.
 - `RUST_BPE_IMPLEMENTATION.md` explains the additive Rust enhanced BPE trainer/encoder implementation,
   including its module layout, training pipeline, encoder behavior, parity contract, and validation commands.
+- `crates/README.md` documents the Rust workspace role and common Cargo commands.
 - `crates/cs336_bpe_rs/README.md` documents the Rust BPE trainer/encoder CLI, generated artifact formats, and
   validation commands.
-- `SETUP.md` gives broader setup guidance and assignment workflow notes.
+- `crates/cs336_bpe_rs/src/README.md`, `src/bin/README.md`, `src/trainer/README.md`, and `src/encoder/README.md`
+  document the Rust source layout, CLI entrypoints, training pipeline, and encoder modules.
+- `cs336_basics/README.md` documents the submitted Python package, implemented modules, current gaps, and development rules.
+- `tests/README.md` documents the pytest suite, adapter role, fixture folders, commands, and current adapter gaps.
+- `tests/fixtures/README.md` documents small tracked test corpora, tokenizer references, and transformer fixtures.
+- `tests/fixtures/ts_tests/README.md` documents the transformer model fixture files.
+- `tests/_snapshots/README.md` documents numerical snapshot fixtures.
+- `bpe_samples/README.md` documents retained tokenizer notebook sample artifacts.
+- `bpe_samples/tinystories/README.md`, `bpe_samples/openwebtext/README.md`, and `bpe_samples/ids/README.md`
+  document sample manifests and encoded-ID artifacts.
+- `data/README.md` documents the local ignored data directory, data download script, generated tokenizer artifacts,
+  and token-ID array conventions.
 - `requirements_for_code_produced.md` lists coding restrictions that submitted code must follow.
 - `AGENTS.md` gives standing instructions for coding agents working in this repository.
 - `repository_structure.md` is this file and should be kept current as implementation modules are added or reorganized.
@@ -79,6 +92,8 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `Cargo.lock` records the resolved Rust dependency graph for the `cs336_bpe_rs` crate.
 - `crates/cs336_bpe_rs/Cargo.toml` declares the Rust BPE crate, library, and `cs336-bpe-train` /
   `cs336-bpe-encode` binaries.
+- `.gitignore` ignores local data, caches, virtual environments, generated submissions, and training outputs while
+  allowing `data/README.md` to remain tracked.
 - `make_submission.sh` and `delete_zone_identifiers.sh` are helper scripts.
 - `run_tinystories_bpe_enhanced.sh` runs the enhanced BPE trainer on the full TinyStories training corpus with
   a 10,000-token vocabulary target, the `<|endoftext|>` special token, and artifact output under

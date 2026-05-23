@@ -51,7 +51,8 @@ Thumbs.db
 .cache/
 
 # Local training and experiment outputs
-data/
+data/*
+!data/README.md
 wandb/
 runs/
 outputs/
