@@ -9,6 +9,7 @@ use std::fs;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{Context, Result};
@@ -21,10 +22,10 @@ use crate::config::{METADATA_FILENAME, MIN_PARALLEL_BYTES};
 use crate::pretokenizer::pretoken_byte_counts;
 
 use self::artifacts::write_training_artifacts;
-use self::counts::{build_initial_pair_state, word_pair_frequencies};
+use self::counts::build_initial_pair_state;
 use self::heap::{pop_best_pair, push_pair, rebuild_heap};
 use self::merge::merge_word;
-use self::state::{BytePair, Count, TokenId, TokenPair, TrainerState};
+use self::state::{BytePair, Count, TokenBytes, TokenId, TokenPair, TrainerState};
 
 #[derive(Debug, Clone)]
 pub struct TrainConfig {
@@ -55,12 +56,15 @@ pub fn train_bpe(config: TrainConfig) -> Result<TrainOutput> {
     let input_file_bytes = fs::metadata(&config.input_path)?.len();
 
     let phase_start = Instant::now();
-    let mut id_to_bytes: Vec<Vec<u8>> = (0u16..=255).map(|value| vec![value as u8]).collect();
-    let mut vocab_values: HashSet<Vec<u8>> = id_to_bytes.iter().cloned().collect();
+    let mut id_to_bytes: Vec<TokenBytes> = (0u16..=255)
+        .map(|value| Arc::<[u8]>::from(vec![value as u8]))
+        .collect();
+    let mut vocab_values: HashSet<Vec<u8>> =
+        id_to_bytes.iter().map(|value| value.to_vec()).collect();
     for special_token in &config.special_tokens {
         let special_bytes = special_token.as_bytes().to_vec();
         if vocab_values.insert(special_bytes.clone()) {
-            id_to_bytes.push(special_bytes);
+            id_to_bytes.push(Arc::<[u8]>::from(special_bytes));
         }
     }
     record_phase(&mut phase_durations, "vocab_setup", phase_start);
@@ -198,7 +202,11 @@ pub fn train_bpe(config: TrainConfig) -> Result<TrainOutput> {
     fs::write(output_dir.join(METADATA_FILENAME), metadata_text)?;
 
     Ok(TrainOutput {
-        vocab: state.id_to_bytes,
+        vocab: state
+            .id_to_bytes
+            .iter()
+            .map(|token| token.to_vec())
+            .collect(),
         merges: state.merges,
         output_dir,
     })
@@ -271,14 +279,16 @@ fn pretoken_counts_for_range(
 
 fn apply_merge(state: &mut TrainerState, best_pair: TokenPair) -> HashSet<TokenPair> {
     let mut changed_pairs = HashSet::new();
-    let mut merged_token = state.id_to_bytes[best_pair.0 as usize].clone();
-    merged_token.extend(&state.id_to_bytes[best_pair.1 as usize]);
+    let left_bytes = state.id_to_bytes[best_pair.0 as usize].clone();
+    let right_bytes = state.id_to_bytes[best_pair.1 as usize].clone();
+    let mut merged_token = Vec::with_capacity(left_bytes.len() + right_bytes.len());
+    merged_token.extend_from_slice(&left_bytes);
+    merged_token.extend_from_slice(&right_bytes);
     let merged_token_id = state.id_to_bytes.len() as TokenId;
-    state.merges.push((
-        state.id_to_bytes[best_pair.0 as usize].clone(),
-        state.id_to_bytes[best_pair.1 as usize].clone(),
-    ));
-    state.id_to_bytes.push(merged_token);
+    state
+        .merges
+        .push((left_bytes.to_vec(), right_bytes.to_vec()));
+    state.id_to_bytes.push(Arc::<[u8]>::from(merged_token));
 
     let affected_word_ids: Vec<_> = state
         .pair_to_word_ids
@@ -288,22 +298,23 @@ fn apply_merge(state: &mut TrainerState, best_pair: TokenPair) -> HashSet<TokenP
         .into_iter()
         .collect();
 
+    let mut old_unique_pairs = Vec::new();
+    let mut new_unique_pairs = Vec::new();
     for word_id in affected_word_ids {
         let word_count = state.word_counts[word_id];
-        let old_word = state.words[word_id].clone();
-        let old_pairs = word_pair_frequencies(&old_word);
+        let old_word = std::mem::take(&mut state.words[word_id]);
 
-        for (pair, frequency) in old_pairs {
+        old_unique_pairs.clear();
+        for window in old_word.windows(2) {
+            let pair = (window[0], window[1]);
             changed_pairs.insert(pair);
-            let decrement = frequency * word_count;
-            match state.pair_counts.get_mut(&pair) {
-                Some(count) if *count > decrement => *count -= decrement,
-                Some(_) => {
-                    state.pair_counts.remove(&pair);
-                }
-                None => {}
-            }
+            old_unique_pairs.push(pair);
+            decrement_pair_count(&mut state.pair_counts, pair, word_count);
+        }
 
+        old_unique_pairs.sort_unstable();
+        old_unique_pairs.dedup();
+        for &pair in &old_unique_pairs {
             if let Some(word_ids) = state.pair_to_word_ids.get_mut(&pair) {
                 word_ids.remove(&word_id);
                 if word_ids.is_empty() {
@@ -313,19 +324,41 @@ fn apply_merge(state: &mut TrainerState, best_pair: TokenPair) -> HashSet<TokenP
         }
 
         let new_word = merge_word(&old_word, best_pair, merged_token_id);
-        state.words[word_id] = new_word.clone();
-        for (pair, frequency) in word_pair_frequencies(&new_word) {
+        new_unique_pairs.clear();
+        for window in new_word.windows(2) {
+            let pair = (window[0], window[1]);
             changed_pairs.insert(pair);
-            *state.pair_counts.entry(pair).or_insert(0) += frequency * word_count;
+            new_unique_pairs.push(pair);
+            *state.pair_counts.entry(pair).or_insert(0) += word_count;
+        }
+
+        new_unique_pairs.sort_unstable();
+        new_unique_pairs.dedup();
+        for &pair in &new_unique_pairs {
             state
                 .pair_to_word_ids
                 .entry(pair)
                 .or_default()
                 .insert(word_id);
         }
+        state.words[word_id] = new_word;
     }
     changed_pairs.insert(best_pair);
     changed_pairs
+}
+
+fn decrement_pair_count(
+    pair_counts: &mut HashMap<TokenPair, Count>,
+    pair: TokenPair,
+    decrement: Count,
+) {
+    match pair_counts.get_mut(&pair) {
+        Some(count) if *count > decrement => *count -= decrement,
+        Some(_) => {
+            pair_counts.remove(&pair);
+        }
+        None => {}
+    }
 }
 
 fn should_rebuild_heap(heap_rebuild_factor: f64, heap_len: usize, pair_count_len: usize) -> bool {

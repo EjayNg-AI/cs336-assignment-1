@@ -6,9 +6,7 @@ use anyhow::{anyhow, bail, Context, Error, Result};
 use crate::encoder::merges::load_merges;
 use crate::encoder::streaming::TokenSegment;
 use crate::encoder::vocab::load_vocab;
-use crate::pretokenizer::{
-    find_next_special, pretoken_byte_strings, pretoken_spans, sorted_special_tokens,
-};
+use crate::pretokenizer::{find_next_special, pretoken_spans, sorted_special_tokens};
 use crate::trainer::state::{BytePair, TokenId, TokenPair};
 
 const MAX_CACHE_SIZE: usize = 50_000;
@@ -204,8 +202,8 @@ impl Tokenizer {
 
     fn encode_normal_text(&mut self, text: &str) -> Result<Vec<TokenId>> {
         let mut ids = Vec::new();
-        for pretoken in pretoken_byte_strings(text)? {
-            ids.extend(self.encode_pretoken(&pretoken)?);
+        for (start, end) in pretoken_spans(text)? {
+            ids.extend(self.encode_pretoken(text[start..end].as_bytes())?);
         }
         Ok(ids)
     }

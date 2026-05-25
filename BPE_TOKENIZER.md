@@ -37,17 +37,24 @@ Local full-corpus runs with `num_workers=8`, 64 MiB chunks, and
 These BPE trainer runs are CPU/Python multiprocessing jobs; they do not use the
 GPU.
 
-## Run the Rust BPE trainer
+## Run the optimized Rust BPE trainer and encoder
 
 The repository also includes an additive Rust implementation of the enhanced
 byte-level BPE trainer and encoder under `crates/cs336_bpe_rs/`. It is a
 correctness-equivalent sibling of the Python enhanced trainer/tokenizer, not a
 replacement for `tests/adapters.py` or the submitted Python assignment path.
 
-Build the optimized Rust binary before timing a large run:
+Use the current optimized Rust release binaries for future large BPE training
+and encoding runs. The optimized trainer keeps the same vocabulary/merge
+semantics while reducing merge-loop allocation overhead on large-vocabulary
+OpenWebText-style jobs. The optimized encoder batches token-byte writes and
+SHA-256 updates, which substantially improves full-corpus `.npy` serialization
+without changing token IDs or metadata contracts.
+
+Build release binaries before timing or running large corpora:
 
 ```sh
-cargo build --release -p cs336_bpe_rs
+cargo build --release -p cs336_bpe_rs --bins
 ```
 
 Example full TinyStories training command:
@@ -61,6 +68,19 @@ target/release/cs336-bpe-train \
   --chunk-bytes 67108864 \
   --heap-rebuild-factor 3.0 \
   --output-dir data/rust/tinystories_bpe_10000
+```
+
+Example full OpenWebText training command:
+
+```sh
+target/release/cs336-bpe-train \
+  --input data/owt_train.txt \
+  --vocab-size 32000 \
+  --special-token '<|endoftext|>' \
+  --num-workers 8 \
+  --chunk-bytes 67108864 \
+  --heap-rebuild-factor 3.0 \
+  --output-dir data/rust/owt_bpe_32000
 ```
 
 The Rust trainer writes language-neutral artifacts only:
@@ -97,6 +117,20 @@ target/release/cs336-bpe-encode \
   --split valid
 ```
 
+For standard full-corpus token-ID serialization, prefer the Rust wrapper with a
+fresh output directory so previous token arrays are not overwritten:
+
+```sh
+EXPERIMENT3_OUTPUT_DIR=data/bpe_tokenized_corpora_rs_new \
+TINYSTORIES_TOKENIZER_DIR=data/rust/tinystories_bpe_10000 \
+OWT_TOKENIZER_DIR=data/rust/owt_bpe_32000 \
+SPLITS="tinystories_train tinystories_valid owt_train owt_valid" \
+bash run_bpe_experiment_3_tokenization_rs.sh
+```
+
+Use `FORCE=1` only when intentionally replacing outputs in the selected
+`EXPERIMENT3_OUTPUT_DIR`.
+
 A completed full TinyStories Rust run is stored under
 `data/rust/tinystories_bpe_10000/`, including `run_timing.txt`. Compared with
 the current Python enhanced metadata in `data/tinystories_bpe_10000/`, the
@@ -117,6 +151,15 @@ because Python and Rust serialize JSON strings differently.
 
 See `RUST_BPE_IMPLEMENTATION.md` for implementation details, parity notes, and
 the full phase-level timing table.
+
+Recent optimization findings are also documented there. On one warmup plus one
+timed run for full TinyStories training and two delimiter-aligned OpenWebText
+training subsamples of similar size, the optimized Rust paths improved the
+geometric-mean wall-clock time by about `1.49x`. The encoder saw the largest
+gain: full TinyStories `.npy` serialization improved from `240.73s` to
+`105.72s`, and OpenWebText sample serialization improved by about `1.83x` to
+`1.89x`. Trainer output parity and encoder token-stream SHA-256 checks matched
+for all benchmarked tasks.
 
 ## BPE tokenizer experiment artifacts
 

@@ -20,6 +20,13 @@ cargo run -p cs336_bpe_rs --bin cs336-bpe-train -- --help
 cargo run -p cs336_bpe_rs --bin cs336-bpe-encode -- --help
 ```
 
+For large training or encoding jobs, build release binaries and run
+`target/release/cs336-bpe-train` or `target/release/cs336-bpe-encode` directly:
+
+```sh
+cargo build --release -p cs336_bpe_rs --bins
+```
+
 Use [`../../../../run_bpe_experiment_3_tokenization_rs.sh`](../../../../run_bpe_experiment_3_tokenization_rs.sh)
 to serialize the standard TinyStories/OpenWebText splits through the Rust
 encoder. Full examples are in [`../../README.md`](../../README.md).

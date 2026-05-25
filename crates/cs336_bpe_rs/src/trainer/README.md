@@ -18,6 +18,11 @@ Inputs are UTF-8 corpus files and trainer settings from the CLI or library API.
 Outputs are language-neutral tokenizer artifacts; Python pickle files are not
 written by the Rust trainer.
 
+The trainer is optimized for large-corpus enhanced BPE runs while preserving
+the Python enhanced trainer's merge semantics. Heap entries share token byte
+storage, and the merge loop updates adjacent-pair counts by direct window scans
+instead of allocating per-word frequency maps.
+
 Run validation from the repository root:
 
 ```sh

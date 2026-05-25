@@ -63,7 +63,8 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `SETUP.md` gives broader setup guidance, test commands, data-download steps, optional Rust commands, and troubleshooting notes.
 - `BPE_TOKENIZER.md` documents enhanced BPE trainer usage and retained tokenizer experiment artifacts.
 - `RUST_BPE_IMPLEMENTATION.md` explains the additive Rust enhanced BPE trainer/encoder implementation,
-  including its module layout, training pipeline, encoder behavior, parity contract, and validation commands.
+  including its module layout, training pipeline, encoder behavior, parity contract, optimization findings,
+  recommended future run workflow, and validation commands.
 - `crates/README.md` documents the Rust workspace role and common Cargo commands.
 - `crates/cs336_bpe_rs/README.md` documents the Rust BPE trainer/encoder CLI, generated artifact formats, and
   validation commands.

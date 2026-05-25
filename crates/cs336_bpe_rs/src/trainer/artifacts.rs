@@ -7,7 +7,7 @@ use serde::Serialize;
 use crate::bytes_repr::python_bytes_repr;
 use crate::config::{MERGES_TEXT_FILENAME, VOCAB_JSON_FILENAME};
 
-use super::state::BytePair;
+use super::state::{BytePair, TokenBytes};
 
 #[derive(Serialize)]
 struct VocabJson<'a> {
@@ -33,7 +33,7 @@ pub fn default_output_dir(input_path: &Path, vocab_size: usize) -> PathBuf {
 }
 
 pub fn write_training_artifacts(
-    vocab: &[Vec<u8>],
+    vocab: &[TokenBytes],
     merges: &[BytePair],
     output_dir: Option<&Path>,
     input_path: &Path,
@@ -48,7 +48,7 @@ pub fn write_training_artifacts(
     Ok(resolved_output_dir)
 }
 
-pub fn write_vocab_json(vocab: &[Vec<u8>], output_path: &Path) -> Result<()> {
+pub fn write_vocab_json(vocab: &[TokenBytes], output_path: &Path) -> Result<()> {
     let payload = VocabJson {
         format: "cs336_basics.enhanced_bpe.v1",
         tokens: vocab
@@ -56,14 +56,14 @@ pub fn write_vocab_json(vocab: &[Vec<u8>], output_path: &Path) -> Result<()> {
             .enumerate()
             .map(|(id, token)| VocabJsonEntry {
                 id,
-                byte_values: token.clone(),
+                byte_values: token.to_vec(),
                 hex: token
                     .iter()
                     .map(|byte| format!("{byte:02x}"))
                     .collect::<Vec<_>>()
                     .join(""),
                 repr: python_bytes_repr(token),
-                utf8: String::from_utf8(token.clone()).ok(),
+                utf8: String::from_utf8(token.to_vec()).ok(),
             })
             .collect(),
     };

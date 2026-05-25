@@ -1,13 +1,13 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 
-use super::state::{Count, TokenPair};
+use super::state::{Count, TokenBytes, TokenPair};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct HeapEntry {
     pub count: Count,
-    pub left_bytes: Vec<u8>,
-    pub right_bytes: Vec<u8>,
+    pub left_bytes: TokenBytes,
+    pub right_bytes: TokenBytes,
     pub pair: TokenPair,
 }
 
@@ -30,7 +30,7 @@ impl PartialOrd for HeapEntry {
 pub fn push_pair(
     heap: &mut BinaryHeap<HeapEntry>,
     pair_counts: &HashMap<TokenPair, Count>,
-    id_to_bytes: &[Vec<u8>],
+    id_to_bytes: &[TokenBytes],
     pair: TokenPair,
 ) {
     let count = pair_counts.get(&pair).copied().unwrap_or(0);
@@ -47,7 +47,7 @@ pub fn push_pair(
 
 pub fn rebuild_heap(
     pair_counts: &HashMap<TokenPair, Count>,
-    id_to_bytes: &[Vec<u8>],
+    id_to_bytes: &[TokenBytes],
 ) -> BinaryHeap<HeapEntry> {
     let mut heap = BinaryHeap::new();
     for &pair in pair_counts.keys() {
@@ -71,12 +71,20 @@ pub fn pop_best_pair(
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+    use std::sync::Arc;
 
     use super::{pop_best_pair, push_pair, rebuild_heap};
 
+    fn token_bytes(values: &[&[u8]]) -> Vec<Arc<[u8]>> {
+        values
+            .iter()
+            .map(|value| Arc::<[u8]>::from(*value))
+            .collect()
+    }
+
     #[test]
     fn tie_breaks_by_larger_underlying_bytes() {
-        let id_to_bytes = vec![b"a".to_vec(), b"b".to_vec(), b"c".to_vec()];
+        let id_to_bytes = token_bytes(&[b"a", b"b", b"c"]);
         let pair_counts = HashMap::from([((0, 1), 3), ((0, 2), 3)]);
         let mut heap = rebuild_heap(&pair_counts, &id_to_bytes);
         assert_eq!(pop_best_pair(&mut heap, &pair_counts), Some((0, 2)));
@@ -84,7 +92,7 @@ mod tests {
 
     #[test]
     fn discards_stale_heap_entries() {
-        let id_to_bytes = vec![b"a".to_vec(), b"b".to_vec(), b"c".to_vec()];
+        let id_to_bytes = token_bytes(&[b"a", b"b", b"c"]);
         let mut old_counts = HashMap::from([((0, 1), 10), ((1, 2), 2)]);
         let mut heap = rebuild_heap(&old_counts, &id_to_bytes);
         old_counts.insert((0, 1), 1);

@@ -5,8 +5,8 @@ tokenizer.
 
 This crate is an additive sibling of the Python implementation in
 [`../../cs336_basics/`](../../cs336_basics/). It is intended to match the Python
-enhanced trainer/tokenizer semantics before optimizing for speed or memory
-usage. It is not the submitted Python assignment path wired through
+enhanced trainer/tokenizer semantics while providing faster large-corpus Rust
+training and encoding paths. It is not the submitted Python assignment path wired through
 [`../../tests/adapters.py`](../../tests/adapters.py).
 
 ## Layout
@@ -23,10 +23,16 @@ usage. It is not the submitted Python assignment path wired through
 
 ## Binaries
 
+For large corpora, build release binaries and use `target/release/...` directly:
+
+```sh
+cargo build --release -p cs336_bpe_rs --bins
+```
+
 Train a tokenizer:
 
 ```sh
-cargo run -p cs336_bpe_rs --bin cs336-bpe-train -- \
+target/release/cs336-bpe-train \
   --input data/TinyStoriesV2-GPT4-train.txt \
   --vocab-size 10000 \
   --special-token '<|endoftext|>' \
@@ -39,7 +45,7 @@ cargo run -p cs336_bpe_rs --bin cs336-bpe-train -- \
 Encode a file:
 
 ```sh
-cargo run -p cs336_bpe_rs --bin cs336-bpe-encode -- \
+target/release/cs336-bpe-encode \
   --vocab data/tinystories_bpe_10000_rs/vocab.json \
   --merges data/tinystories_bpe_10000_rs/merges.txt \
   --special-token '<|endoftext|>' \
@@ -52,7 +58,7 @@ encoding path. For full-corpus tokenization, it can write memory-mappable
 NumPy `uint16` arrays and sidecar metadata:
 
 ```sh
-cargo run -p cs336_bpe_rs --bin cs336-bpe-encode -- \
+target/release/cs336-bpe-encode \
   --vocab data/tinystories_bpe_10000/vocab.json \
   --merges data/tinystories_bpe_10000/merges.txt \
   --special-token '<|endoftext|>' \
@@ -64,6 +70,12 @@ cargo run -p cs336_bpe_rs --bin cs336-bpe-encode -- \
   --corpus tinystories \
   --split valid
 ```
+
+The current optimized encoder batches token-byte writes and SHA-256 updates
+during `.npy` serialization. The current optimized trainer reduces allocation
+overhead in large-vocabulary merge loops while preserving deterministic merge
+selection and artifact parity. Use these release binaries for future full
+TinyStories/OpenWebText training and encoding runs.
 
 ## Artifacts
 
@@ -77,6 +89,20 @@ It intentionally does not write Python pickle files. Python remains responsible
 for pickle artifacts when those are needed. The encoder's `.npy` mode writes
 flat little-endian `uint16` token-ID arrays compatible with
 `np.load(..., mmap_mode="r")`.
+
+For standard full-corpus tokenization, prefer the repository wrapper with a
+fresh output directory:
+
+```sh
+EXPERIMENT3_OUTPUT_DIR=data/bpe_tokenized_corpora_rs_new \
+TINYSTORIES_TOKENIZER_DIR=data/tinystories_bpe_10000 \
+OWT_TOKENIZER_DIR=data/owt_bpe_32000 \
+SPLITS="tinystories_train tinystories_valid owt_train owt_valid" \
+bash run_bpe_experiment_3_tokenization_rs.sh
+```
+
+Use `FORCE=1` only when intentionally replacing outputs in the selected
+`EXPERIMENT3_OUTPUT_DIR`.
 
 ## Validation
 

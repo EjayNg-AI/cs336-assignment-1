@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::io::{self, Read, Write};
+use std::io::{self, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
@@ -11,6 +11,7 @@ use cs336_bpe_rs::Tokenizer;
 use serde_json::{json, Value};
 
 const DEFAULT_STREAM_CHUNK_BYTES: usize = 1_048_576;
+const TOKEN_BYTE_BUFFER_BYTES: usize = 1_048_576;
 const UINT16_MAX: u32 = u16::MAX as u32;
 
 #[derive(Debug, Parser)]
@@ -138,12 +139,14 @@ fn encode_to_npy(args: &Args, output_npy_path: &Path) -> Result<()> {
         .stream_chunk_bytes
         .unwrap_or(DEFAULT_STREAM_CHUNK_BYTES);
     let chunks = Utf8FileChunks::new(&args.input, stream_chunk_bytes)?;
-    let mut raw_file = File::create(&raw_tmp_path).with_context(|| {
+    let raw_file = File::create(&raw_tmp_path).with_context(|| {
         format!(
             "failed to create temporary token stream {}",
             raw_tmp_path.display()
         )
     })?;
+    let mut raw_file = BufWriter::with_capacity(TOKEN_BYTE_BUFFER_BYTES, raw_file);
+    let mut token_byte_buffer = Vec::with_capacity(TOKEN_BYTE_BUFFER_BYTES);
     let mut hasher = Sha256::new();
     let mut token_count = 0u64;
     let mut min_token_id = UINT16_MAX;
@@ -156,8 +159,12 @@ fn encode_to_npy(args: &Args, output_npy_path: &Path) -> Result<()> {
             bail!("token id {token_id} exceeds uint16 max {UINT16_MAX}");
         }
         let bytes = (token_id as u16).to_le_bytes();
-        raw_file.write_all(&bytes)?;
-        hasher.update(&bytes);
+        token_byte_buffer.extend_from_slice(&bytes);
+        if token_byte_buffer.len() >= TOKEN_BYTE_BUFFER_BYTES {
+            raw_file.write_all(&token_byte_buffer)?;
+            hasher.update(&token_byte_buffer);
+            token_byte_buffer.clear();
+        }
         token_count += 1;
         min_token_id = min_token_id.min(token_id);
         max_token_id = max_token_id.max(token_id);
@@ -176,6 +183,10 @@ fn encode_to_npy(args: &Args, output_npy_path: &Path) -> Result<()> {
         }
         Ok(())
     })?;
+    if !token_byte_buffer.is_empty() {
+        raw_file.write_all(&token_byte_buffer)?;
+        hasher.update(&token_byte_buffer);
+    }
     raw_file.flush()?;
     drop(raw_file);
 

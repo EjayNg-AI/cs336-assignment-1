@@ -1235,6 +1235,198 @@ Artifact parity for the full TinyStories run:
 - Rust training does not produce `vocab.pkl` or `merges.pkl`; the encoder can
   produce `.npy` token-ID arrays from `vocab.json` and `merges.txt`.
 
+## 2026-05-25 Optimization Findings
+
+The Rust BPE trainer and encoder were optimized for wall-clock time while
+preserving exact training output semantics, special-token behavior, encoded
+token IDs, and metadata contracts. The changes are local to
+`crates/cs336_bpe_rs/` and do not add dependencies.
+
+The encoder improvements target full-corpus `.npy` serialization:
+
+- `cs336-bpe-encode` now buffers emitted little-endian `uint16` token bytes in
+  1 MiB batches before writing to the raw temporary stream.
+- SHA-256 updates use the same byte batches instead of updating once per token.
+- Normal text encoding now uses regex pretoken spans and passes borrowed byte
+  slices to `encode_pretoken`, avoiding an intermediate `Vec<Vec<u8>>` of
+  pretokens.
+
+These changes preserve the raw token payload byte-for-byte. The `.npy` writer
+still validates token IDs fit in `uint16`, writes the same metadata fields, and
+computes `token_stream_sha256_uint16_le` over the same payload bytes.
+
+The trainer improvements target the merge loop and heap bookkeeping:
+
+- Trainer token byte storage uses `Arc<[u8]>`, so heap entries clone shared byte
+  references instead of cloning token byte vectors. Heap ordering still compares
+  underlying bytes, preserving deterministic tie-breaking.
+- `apply_merge` no longer clones each affected word before rewriting it. It
+  temporarily takes the word from the state, rewrites it, then stores the new
+  word back.
+- Old and new adjacent-pair frequencies are updated by direct window scans
+  weighted by `word_count`, avoiding per-word `HashMap` construction in the hot
+  path. Unique pair lists are deduplicated only for posting-list updates.
+
+The benchmark inputs were the full TinyStories training corpus plus two random,
+delimiter-aligned OpenWebText training subsamples of approximately the same byte
+size. All generated benchmark artifacts were isolated under an ignored
+`data/bpe_rs_perf_20260525_092330/` directory. The final methodology used one
+warmup and one timed run per task.
+
+| Task | Baseline | Optimized | Speedup |
+| --- | ---: | ---: | ---: |
+| TinyStories trainer, full train | `29.58s` | `30.35s` | `0.97x` |
+| OpenWebText sample A trainer | `94.20s` | `79.33s` | `1.19x` |
+| OpenWebText sample B trainer | `93.81s` | `79.30s` | `1.18x` |
+| TinyStories encoder, full train | `240.73s` | `105.72s` | `2.28x` |
+| OpenWebText sample A encoder | `246.89s` | `134.81s` | `1.83x` |
+| OpenWebText sample B encoder | `248.05s` | `131.54s` | `1.89x` |
+
+The geometric-mean optimized/baseline wall-clock ratio was `0.673`, equivalent
+to about `1.49x` average speedup. TinyStories training regressed slightly
+because its 10k vocabulary run spends most wall time in pretoken counting rather
+than the optimized merge-loop path. The larger 32k OpenWebText-style trainer
+runs improved because their merge loops are more allocation-sensitive.
+
+Correctness checks for the benchmarked artifacts all passed:
+
+- Trainer `merges.txt` outputs were byte-identical.
+- Trainer `vocab.json` outputs were equal after parsing as JSON.
+- Encoder token counts, min/max token IDs, and
+  `token_stream_sha256_uint16_le` matched between baseline and optimized runs.
+
+## Recommended Future Rust Runs
+
+Use the optimized Rust release binaries for future large BPE training and
+encoding. Prefer Python only when Python pickle artifacts are specifically
+needed; the Rust trainer intentionally writes only `vocab.json`, `merges.txt`,
+and `metadata.json`.
+
+### 1. Prepare Inputs
+
+Confirm the required corpus files exist:
+
+```sh
+ls -lh data/TinyStoriesV2-GPT4-train.txt data/TinyStoriesV2-GPT4-valid.txt
+ls -lh data/owt_train.txt data/owt_valid.txt
+```
+
+Choose fresh output directories under `data/` for each run. Do not reuse a
+previous directory unless you intentionally want to replace its contents.
+
+### 2. Build Optimized Release Binaries
+
+```sh
+cargo build --release -p cs336_bpe_rs --bins
+```
+
+Use `target/release/cs336-bpe-train` and
+`target/release/cs336-bpe-encode` for large runs. `cargo run` is useful for
+development, but it adds Cargo overhead and should not be used for timing.
+
+### 3. Train Tokenizers
+
+TinyStories 10k tokenizer:
+
+```sh
+target/release/cs336-bpe-train \
+  --input data/TinyStoriesV2-GPT4-train.txt \
+  --vocab-size 10000 \
+  --special-token '<|endoftext|>' \
+  --num-workers 8 \
+  --chunk-bytes 67108864 \
+  --heap-rebuild-factor 3.0 \
+  --output-dir data/rust/tinystories_bpe_10000_new
+```
+
+OpenWebText 32k tokenizer:
+
+```sh
+target/release/cs336-bpe-train \
+  --input data/owt_train.txt \
+  --vocab-size 32000 \
+  --special-token '<|endoftext|>' \
+  --num-workers 8 \
+  --chunk-bytes 67108864 \
+  --heap-rebuild-factor 3.0 \
+  --output-dir data/rust/owt_bpe_32000_new
+```
+
+After each run, inspect the trainer metadata:
+
+```sh
+python -m json.tool data/rust/tinystories_bpe_10000_new/metadata.json | sed -n '1,120p'
+python -m json.tool data/rust/owt_bpe_32000_new/metadata.json | sed -n '1,120p'
+```
+
+### 4. Encode Standard Corpus Splits
+
+Use the repository wrapper for Experiment 3-style full-corpus token arrays.
+Point it at the tokenizer artifact directories you want to use and write into a
+fresh output directory:
+
+```sh
+EXPERIMENT3_OUTPUT_DIR=data/bpe_tokenized_corpora_rs_new \
+TINYSTORIES_TOKENIZER_DIR=data/rust/tinystories_bpe_10000_new \
+OWT_TOKENIZER_DIR=data/rust/owt_bpe_32000_new \
+SPLITS="tinystories_train tinystories_valid owt_train owt_valid" \
+bash run_bpe_experiment_3_tokenization_rs.sh
+```
+
+For a smaller validation-only run:
+
+```sh
+EXPERIMENT3_OUTPUT_DIR=data/bpe_tokenized_corpora_rs_valid_new \
+TINYSTORIES_TOKENIZER_DIR=data/rust/tinystories_bpe_10000_new \
+OWT_TOKENIZER_DIR=data/rust/owt_bpe_32000_new \
+SPLITS="tinystories_valid owt_valid" \
+bash run_bpe_experiment_3_tokenization_rs.sh
+```
+
+The wrapper builds the release encoder before running. Existing complete
+outputs are skipped unless `FORCE=1` is set. Use `FORCE=1` only when
+intentionally replacing files in the selected `EXPERIMENT3_OUTPUT_DIR`.
+
+### 5. Direct Encoder CLI
+
+For one-off encoding without the wrapper:
+
+```sh
+target/release/cs336-bpe-encode \
+  --vocab data/rust/tinystories_bpe_10000_new/vocab.json \
+  --merges data/rust/tinystories_bpe_10000_new/merges.txt \
+  --special-token '<|endoftext|>' \
+  --input data/TinyStoriesV2-GPT4-valid.txt \
+  --output-ids-npy data/rust/tinystories_valid_new.npy \
+  --metadata-json data/rust/tinystories_valid_new.json \
+  --stream-chunk-bytes 1048576 \
+  --token-progress-interval 50000000
+```
+
+The sidecar JSON records token count, bytes/token, throughput, min/max token
+IDs, and `token_stream_sha256_uint16_le`.
+
+### 6. Validate Outputs
+
+Run local correctness tests after code changes:
+
+```sh
+cargo test -p cs336_bpe_rs
+uv run pytest tests/test_rust_bpe_parity.py
+uv run pytest tests/test_train_bpe.py tests/test_tokenizer.py
+```
+
+For generated `.npy` token arrays, verify NumPy can load them:
+
+```sh
+uv run python - <<'PY'
+import numpy as np
+
+ids = np.load("data/bpe_tokenized_corpora_rs_new/tinystories/valid.npy", mmap_mode="r")
+print(ids.dtype, ids.shape, int(ids.min()), int(ids.max()))
+PY
+```
+
 ## Validation Commands
 
 Run Rust formatting and tests:
