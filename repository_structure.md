@@ -31,8 +31,9 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
   adapter unless explicitly imported.
 - `crates/cs336_bpe_rs/` contains an additive Rust CLI/library implementation of the enhanced byte-level BPE
   trainer and tokenizer. It is designed as a correctness-equivalent sibling of `train_bpe_enhanced.py` and
-  `tokenizer.py`, writes language-neutral `vocab.json`, `merges.txt`, and `metadata.json` artifacts, and is
-  validated through parity tests rather than being wired into the default Python assignment adapters.
+  `tokenizer.py`, writes language-neutral `vocab.json`, `merges.txt`, and `metadata.json` training artifacts,
+  can serialize encoded token IDs as NumPy `uint16` arrays, and is validated through parity tests rather than
+  being wired into the default Python assignment adapters.
 - Future submitted implementations for model layers, optimization, data loading, serialization, and training utilities should also be placed under `cs336_basics/`, split into modules that match the assignment component being implemented.
 
 `tests/adapters.py` is the bridge between the test suite and submitted code. Adapter functions should stay thin: they should import and call implementations from `cs336_basics/` rather than housing substantial implementation logic themselves.
@@ -104,6 +105,9 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `run_bpe_experiment_3_tokenization.sh` streams the full TinyStories and OpenWebText train/validation corpora
   through `cs336_basics.tokenizer.Tokenizer` and writes flat NumPy `uint16` token-ID arrays plus metadata under
   `data/bpe_tokenized_corpora/`.
+- `run_bpe_experiment_3_tokenization_rs.sh` builds the Rust encoder, streams the same standard corpus splits
+  through `cs336-bpe-encode`, and writes compatible NumPy `uint16` token-ID arrays plus metadata under
+  `data/bpe_tokenized_corpora_rs/` by default.
 - `download_data.sh` downloads the TinyStories and OpenWebText sample files listed in `README.md`, then unpacks the gzipped OpenWebText files into `data/`.
 
 ## Generated BPE Artifacts
@@ -185,6 +189,10 @@ language-model training with `np.load(..., mmap_mode="r")`. The sidecar JSON
 files record source paths, tokenizer artifact paths, token counts, compression
 ratios, throughput measurements, and a SHA-256 hash of the little endian
 `uint16` token stream.
+
+The Rust encoder wrapper `run_bpe_experiment_3_tokenization_rs.sh` writes the
+same array and metadata format from `vocab.json` / `merges.txt` artifacts, using
+`data/bpe_tokenized_corpora_rs/` as its default output directory.
 
 ## Pretokenization Example
 

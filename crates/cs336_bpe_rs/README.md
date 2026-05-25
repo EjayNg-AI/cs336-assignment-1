@@ -48,7 +48,22 @@ cargo run -p cs336_bpe_rs --bin cs336-bpe-encode -- \
 ```
 
 The encoder also accepts `--stream-chunk-bytes <n>` to exercise the streaming
-encoding path.
+encoding path. For full-corpus tokenization, it can write memory-mappable
+NumPy `uint16` arrays and sidecar metadata:
+
+```sh
+cargo run -p cs336_bpe_rs --bin cs336-bpe-encode -- \
+  --vocab data/tinystories_bpe_10000/vocab.json \
+  --merges data/tinystories_bpe_10000/merges.txt \
+  --special-token '<|endoftext|>' \
+  --input data/TinyStoriesV2-GPT4-valid.txt \
+  --output-ids-npy data/bpe_tokenized_corpora_rs/tinystories/valid.npy \
+  --metadata-json data/bpe_tokenized_corpora_rs/tinystories/valid.json \
+  --manifest-json data/bpe_tokenized_corpora_rs/manifest.json \
+  --split-name tinystories_valid \
+  --corpus tinystories \
+  --split valid
+```
 
 ## Artifacts
 
@@ -59,7 +74,9 @@ The trainer writes language-neutral artifacts:
 - `metadata.json`
 
 It intentionally does not write Python pickle files. Python remains responsible
-for pickle artifacts when those are needed.
+for pickle artifacts when those are needed. The encoder's `.npy` mode writes
+flat little-endian `uint16` token-ID arrays compatible with
+`np.load(..., mmap_mode="r")`.
 
 ## Validation
 

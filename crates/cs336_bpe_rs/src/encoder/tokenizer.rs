@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Error, Result};
 
 use crate::encoder::merges::load_merges;
 use crate::encoder::streaming::TokenSegment;
@@ -119,9 +119,28 @@ impl Tokenizer {
     where
         I: IntoIterator<Item = String>,
     {
+        let iterable = iterable.into_iter().map(Ok::<String, Error>);
         let mut output = Vec::new();
+        self.encode_iterable_result_to_sink(iterable, |token_id| {
+            output.push(token_id);
+            Ok(())
+        })?;
+        Ok(output)
+    }
+
+    pub fn encode_iterable_result_to_sink<I, E, F>(
+        &mut self,
+        iterable: I,
+        mut sink: F,
+    ) -> Result<()>
+    where
+        I: IntoIterator<Item = std::result::Result<String, E>>,
+        E: std::fmt::Display,
+        F: FnMut(TokenId) -> Result<()>,
+    {
         let mut buffer = String::new();
         for chunk in iterable {
+            let chunk = chunk.map_err(|error| anyhow!("{error}"))?;
             if chunk.is_empty() {
                 continue;
             }
@@ -129,14 +148,18 @@ impl Tokenizer {
             let segments = self.token_segments(&buffer)?;
             let flush_index = self.stream_flush_index_from_segments(&buffer, &segments);
             if flush_index > 0 {
-                output.extend(self.encode_prefix_with_context(&buffer, flush_index, &segments)?);
+                for token_id in self.encode_prefix_with_context(&buffer, flush_index, &segments)? {
+                    sink(token_id)?;
+                }
                 buffer = buffer[flush_index..].to_string();
             }
         }
         if !buffer.is_empty() {
-            output.extend(self.encode_text(&buffer)?);
+            for token_id in self.encode_text(&buffer)? {
+                sink(token_id)?;
+            }
         }
-        Ok(output)
+        Ok(())
     }
 
     pub fn decode(&self, ids: &[TokenId]) -> Result<String> {

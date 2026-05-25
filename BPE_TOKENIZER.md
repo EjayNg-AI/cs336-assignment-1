@@ -69,9 +69,10 @@ The Rust trainer writes language-neutral artifacts only:
 - `merges.txt`
 - `metadata.json`
 
-It intentionally does not write Python `vocab.pkl` / `merges.pkl` files or
-NumPy `.npy` token-ID arrays. The Rust encoder can consume the generated JSON
-and text artifacts:
+It intentionally does not write Python `vocab.pkl` / `merges.pkl` files. The
+Rust encoder can consume the generated JSON and text artifacts and can write
+either JSON token IDs for small parity checks or NumPy `.npy` token-ID arrays
+for full-corpus serialization:
 
 ```sh
 target/release/cs336-bpe-encode \
@@ -80,6 +81,20 @@ target/release/cs336-bpe-encode \
   --special-token '<|endoftext|>' \
   --input data/TinyStoriesV2-GPT4-valid.txt \
   --output-ids-json data/rust/tinystories_bpe_10000/valid_ids.json
+```
+
+```sh
+target/release/cs336-bpe-encode \
+  --vocab data/rust/tinystories_bpe_10000/vocab.json \
+  --merges data/rust/tinystories_bpe_10000/merges.txt \
+  --special-token '<|endoftext|>' \
+  --input data/TinyStoriesV2-GPT4-valid.txt \
+  --output-ids-npy data/bpe_tokenized_corpora_rs/tinystories/valid.npy \
+  --metadata-json data/bpe_tokenized_corpora_rs/tinystories/valid.json \
+  --manifest-json data/bpe_tokenized_corpora_rs/manifest.json \
+  --split-name tinystories_valid \
+  --corpus tinystories \
+  --split valid
 ```
 
 A completed full TinyStories Rust run is stored under
@@ -197,3 +212,18 @@ Supported split names are `tinystories_train`, `tinystories_valid`,
 `FORCE=1` is set. The script also defaults `UV_CACHE_DIR` to
 `data/.uv-cache`, so generated arrays, metadata, temporary files, and cache
 writes from the run live under `data/`, which is ignored by Git.
+
+The equivalent Rust encoder wrapper is:
+
+```sh
+bash run_bpe_experiment_3_tokenization_rs.sh
+```
+
+It consumes `vocab.json` and `merges.txt`, writes the same flat little-endian
+`uint16` `.npy` array format plus sidecar JSON metadata, and defaults to
+`data/bpe_tokenized_corpora_rs/` so it does not overwrite Python-generated
+arrays. It accepts the same `SPLITS`, `SPECIAL_TOKEN`,
+`TINYSTORIES_TOKENIZER_DIR`, `OWT_TOKENIZER_DIR`, and `FORCE=1` overrides, plus
+`STREAM_CHUNK_BYTES` for the Rust file reader. The byte-level `.npy`
+construction and temporary-file write sequence are documented in
+[`RUST_BPE_IMPLEMENTATION.md`](RUST_BPE_IMPLEMENTATION.md#numpy-npy-serialization).

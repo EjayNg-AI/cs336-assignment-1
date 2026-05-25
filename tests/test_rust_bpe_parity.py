@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 import subprocess
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from cs336_basics.tokenizer import Tokenizer
@@ -73,6 +75,48 @@ def run_rust_encode(
         cmd += ["--special-token", special_token]
     if stream_chunk_bytes is not None:
         cmd += ["--stream-chunk-bytes", str(stream_chunk_bytes)]
+    subprocess.run(cmd, cwd=REPO_ROOT, check=True)
+
+
+def run_rust_encode_npy(
+    vocab_path: Path,
+    merges_path: Path,
+    corpus: Path,
+    npy_path: Path,
+    metadata_path: Path,
+    special_tokens: list[str],
+    stream_chunk_bytes: int = 7,
+) -> None:
+    cmd = [
+        "cargo",
+        "run",
+        "-q",
+        "-p",
+        "cs336_bpe_rs",
+        "--bin",
+        "cs336-bpe-encode",
+        "--",
+        "--vocab",
+        str(vocab_path),
+        "--merges",
+        str(merges_path),
+        "--input",
+        str(corpus),
+        "--output-ids-npy",
+        str(npy_path),
+        "--metadata-json",
+        str(metadata_path),
+        "--split-name",
+        "edge_valid",
+        "--corpus",
+        "edge",
+        "--split",
+        "valid",
+        "--stream-chunk-bytes",
+        str(stream_chunk_bytes),
+    ]
+    for special_token in special_tokens:
+        cmd += ["--special-token", special_token]
     subprocess.run(cmd, cwd=REPO_ROOT, check=True)
 
 
@@ -168,3 +212,46 @@ def test_rust_streaming_encoder_matches_whole_file_encoding(tmp_path: Path) -> N
             stream_chunk_bytes=chunk_bytes,
         )
         assert json.loads(stream_ids_path.read_text(encoding="utf-8")) == whole_ids
+
+
+def test_rust_encoder_writes_numpy_uint16_token_array(tmp_path: Path) -> None:
+    corpus = tmp_path / "edge.txt"
+    corpus.write_text(
+        "abc <|endoftext|><|endoftext|> Héllò 🙃\ntrailing whitespace    \n",
+        encoding="utf-8",
+    )
+    out_dir = tmp_path / "rs"
+    run_rust_train(corpus, out_dir, 320, ["<|endoftext|>"])
+
+    py_tokenizer = Tokenizer.from_files(
+        str(out_dir / "vocab.json"),
+        str(out_dir / "merges.txt"),
+        special_tokens=["<|endoftext|>"],
+    )
+    py_ids = py_tokenizer.encode(corpus.read_text(encoding="utf-8"))
+
+    npy_path = tmp_path / "valid.npy"
+    metadata_path = tmp_path / "valid.json"
+    run_rust_encode_npy(
+        out_dir / "vocab.json",
+        out_dir / "merges.txt",
+        corpus,
+        npy_path,
+        metadata_path,
+        ["<|endoftext|>"],
+    )
+
+    token_ids = np.load(npy_path, mmap_mode="r")
+    assert token_ids.dtype == np.dtype("<u2")
+    np.testing.assert_array_equal(token_ids, np.asarray(py_ids, dtype=np.uint16))
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    assert metadata["format"] == "cs336_basics.bpe_tokenized_corpus.v1"
+    assert metadata["dtype"] == "uint16"
+    assert metadata["shape"] == [len(py_ids)]
+    assert metadata["token_count"] == len(py_ids)
+    assert metadata["min_token_id"] == min(py_ids)
+    assert metadata["max_token_id"] == max(py_ids)
+    assert metadata["token_stream_sha256_uint16_le"] == hashlib.sha256(
+        np.asarray(py_ids, dtype="<u2").tobytes()
+    ).hexdigest()

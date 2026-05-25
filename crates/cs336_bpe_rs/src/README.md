@@ -14,6 +14,8 @@ for design notes.
 - [`encoder/`](encoder/): artifact loading and tokenization.
 - [`pretokenizer.rs`](pretokenizer.rs): GPT-style pre-tokenization.
 - [`chunking.rs`](chunking.rs): corpus chunk-boundary support.
+- [`npy.rs`](npy.rs): minimal NumPy `.npy` header writing for `uint16` token arrays.
+- [`sha256.rs`](sha256.rs): small SHA-256 implementation used for token-stream metadata.
 - [`bytes_repr.rs`](bytes_repr.rs): byte-token display and parsing helpers.
 - [`config.rs`](config.rs): runtime configuration helpers.
 - [`errors.rs`](errors.rs): crate-level error types.

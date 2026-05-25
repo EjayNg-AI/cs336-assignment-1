@@ -3,7 +3,9 @@ pub mod chunking;
 pub mod config;
 pub mod encoder;
 pub mod errors;
+pub mod npy;
 pub mod pretokenizer;
+pub mod sha256;
 pub mod trainer;
 
 pub use encoder::Tokenizer;

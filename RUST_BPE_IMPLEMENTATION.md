@@ -11,8 +11,9 @@ The implementation goal is parity with:
 - `cs336_basics/tokenizer.py`
 
 The current Rust implementation writes language-neutral tokenizer artifacts and
-supports CLI training and encoding. It does not write Python pickle files or
-NumPy `.npy` token arrays.
+supports CLI training and encoding. It does not write Python pickle files. The
+encoder can serialize token IDs as JSON for small parity checks or as NumPy
+`.npy` arrays for full-corpus token-ID datasets.
 
 ## Layout
 
@@ -37,6 +38,8 @@ crates/cs336_bpe_rs/
     |-- pretokenizer.rs
     |-- chunking.rs
     |-- bytes_repr.rs
+    |-- npy.rs
+    |-- sha256.rs
     |-- trainer/
     |   |-- mod.rs
     |   |-- state.rs
@@ -63,7 +66,9 @@ pub mod chunking;
 pub mod config;
 pub mod encoder;
 pub mod errors;
+pub mod npy;
 pub mod pretokenizer;
+pub mod sha256;
 pub mod trainer;
 
 pub use encoder::Tokenizer;
@@ -133,10 +138,34 @@ struct Args {
     input: PathBuf,
 
     #[arg(long)]
-    output_ids_json: PathBuf,
+    output_ids_json: Option<PathBuf>,
+
+    #[arg(long)]
+    output_ids_npy: Option<PathBuf>,
+
+    #[arg(long)]
+    metadata_json: Option<PathBuf>,
+
+    #[arg(long)]
+    manifest_json: Option<PathBuf>,
+
+    #[arg(long)]
+    split_name: Option<String>,
+
+    #[arg(long)]
+    corpus: Option<String>,
+
+    #[arg(long)]
+    split: Option<String>,
+
+    #[arg(long, default_value_t = false)]
+    force: bool,
 
     #[arg(long)]
     stream_chunk_bytes: Option<usize>,
+
+    #[arg(long)]
+    token_progress_interval: Option<u64>,
 }
 ```
 
@@ -152,6 +181,112 @@ cargo run -p cs336_bpe_rs --bin cs336-bpe-encode -- \
 ```
 
 The optional `--stream-chunk-bytes` flag exercises the streaming encoder path.
+For full-corpus tokenization, use `--output-ids-npy` with optional
+`--metadata-json` and `--manifest-json` to write a flat little-endian `uint16`
+NumPy array compatible with `np.load(..., mmap_mode="r")`.
+
+The repository wrapper for the standard Experiment 3 splits is:
+
+```sh
+bash run_bpe_experiment_3_tokenization_rs.sh
+```
+
+## NumPy `.npy` Serialization
+
+Rust `.npy` output is implemented for the Experiment 3 token-ID datasets, where
+the desired artifact is a flat memory-mappable array of tokenizer IDs. The
+writer intentionally supports only the format this repository needs:
+
+- NumPy format version: `1.0`
+- dtype: little-endian unsigned 16-bit integers, written as `'<u2'`
+- shape: one-dimensional `(token_count,)`
+- order: C order, recorded as `fortran_order: False`
+
+The output is equivalent to a Python array created with:
+
+```py
+np.asarray(token_ids, dtype=np.dtype("<u2"))
+```
+
+and saved in a way that can later be loaded with:
+
+```py
+ids = np.load("data/bpe_tokenized_corpora_rs/tinystories/valid.npy", mmap_mode="r")
+```
+
+### On-Disk File Layout
+
+The `.npy` file is written as:
+
+1. Magic bytes: `\x93NUMPY`
+2. Version bytes: `\x01\x00`
+3. Two-byte little-endian header length
+4. ASCII Python-literal header dictionary
+5. Raw little-endian `uint16` token bytes
+
+For a split with `N` tokens, the header dictionary has this logical content:
+
+```text
+{'descr': '<u2', 'fortran_order': False, 'shape': (N,), }
+```
+
+The header is padded with spaces and terminated by a newline so the full header
+prefix is 16-byte aligned, following NumPy v1 format expectations. The payload
+then contains exactly `2 * N` bytes. Token ID `513`, for example, is written as
+the two bytes `0x01 0x02`.
+
+### Write Sequence
+
+The Rust encoder writes `.npy` output in two phases so the final file has a
+correct shape without storing the full token stream in memory:
+
+1. Load `vocab.json` and `merges.txt` into the Rust `Tokenizer`.
+2. Read the input corpus as UTF-8 chunks, preserving character boundaries.
+3. Stream chunks through `Tokenizer::encode_iterable_result_to_sink`.
+4. For each emitted token ID:
+   - validate it is `<= 65535`;
+   - write it to a temporary raw `.uint16.tmp` stream as little-endian bytes;
+   - update token count, min/max token ID, throughput counters, and SHA-256.
+5. After encoding completes, verify the raw stream is exactly `2 * token_count`
+   bytes.
+6. Create a temporary `.npy.tmp` file, write the NumPy header using the final
+   token count, then copy the raw token payload after the header.
+7. Remove the raw temporary stream and atomically rename `.npy.tmp` into the
+   requested final `.npy` path.
+
+This is why the implementation does not need to know `token_count` before
+encoding starts, and also does not need a large in-memory `Vec<TokenId>` for
+full corpora.
+
+### Sidecar Metadata and Manifest
+
+When `--metadata-json` is provided, the encoder writes a sidecar JSON file next
+to the array. It records:
+
+- source input path and byte size;
+- tokenizer artifact paths;
+- special tokens;
+- output path, dtype, NumPy dtype descriptor, and shape;
+- token count plus observed min/max token IDs;
+- SHA-256 of the little-endian `uint16` token stream;
+- bytes/token and throughput measurements;
+- a `np.load(..., mmap_mode="r")` loading example.
+
+The SHA-256 is computed over the payload token bytes only, not over the `.npy`
+header. This matches the Python wrapper's `token_stream_sha256_uint16_le`
+contract and makes hashes independent of header formatting.
+
+When `--manifest-json` is provided, the encoder scans split metadata JSON files
+under the output directory and writes a top-level manifest using the same
+`cs336_basics.bpe_experiment_3_manifest.v1` format as the Python wrapper.
+
+### Failure and Replacement Behavior
+
+The final `.npy` file is not replaced until the temporary raw stream has been
+fully encoded and the temporary `.npy` file has been constructed. Existing final
+outputs are rejected unless `--force` is supplied. Temporary files use sibling
+paths such as `valid.uint16.tmp` and `valid.npy.tmp`, so interrupted runs leave
+recoverable scratch files without silently corrupting a completed final array.
 
 ## Trainer Pipeline
 
@@ -859,7 +994,9 @@ assert json.loads(ids_path.read_text(encoding="utf-8")) == py_ids
 ```
 
 Streaming parity checks chunk sizes `1`, `2`, `7`, and `4096` against whole-file
-Rust encoding.
+Rust encoding. The `.npy` parity test loads Rust output with NumPy and checks
+that the `uint16` token array and SHA-256 sidecar metadata match the Python
+tokenizer IDs.
 
 ## Current Parity Contract
 
@@ -873,7 +1010,8 @@ The current implementation is intended to provide:
 Known intentional differences:
 
 - Rust does not write `vocab.pkl` or `merges.pkl`.
-- Rust does not write `.npy` token arrays.
+- Rust training does not write `.npy` token arrays; Rust encoding can serialize
+  `.npy` arrays with sidecar metadata.
 - `metadata.json` has Rust-specific fields and format naming.
 - Raw `vocab.json` bytes may differ because Python and Rust serialize JSON
   differently, but the parsed JSON object is expected to match.
@@ -968,7 +1106,8 @@ Artifact parity for the full TinyStories run:
 - `vocab.json` is equal after parsing as JSON.
 - Raw `vocab.json` bytes differ because Python and Rust serialize JSON strings
   differently.
-- Rust does not produce `vocab.pkl`, `merges.pkl`, or `.npy` token-ID arrays.
+- Rust training does not produce `vocab.pkl` or `merges.pkl`; the encoder can
+  produce `.npy` token-ID arrays from `vocab.json` and `merges.txt`.
 
 ## Validation Commands
 

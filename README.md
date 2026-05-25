@@ -94,6 +94,7 @@ Serialize full-corpus token IDs after the tokenizer artifacts exist:
 
 ```sh
 bash run_bpe_experiment_3_tokenization.sh
+bash run_bpe_experiment_3_tokenization_rs.sh  # Rust encoder variant
 ```
 
 Build the assignment submission archive:

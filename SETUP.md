@@ -211,6 +211,13 @@ target/release/cs336-bpe-encode \
   --output-ids-json data/rust/tinystories_bpe_10000/valid_ids.json
 ```
 
+Serialize the standard Experiment 3 splits to NumPy arrays with the Rust
+encoder:
+
+```bash
+bash run_bpe_experiment_3_tokenization_rs.sh
+```
+
 More detail is documented in `RUST_BPE_IMPLEMENTATION.md` and
 `crates/cs336_bpe_rs/README.md`.
 

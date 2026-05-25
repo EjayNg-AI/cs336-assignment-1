@@ -38,6 +38,7 @@ Each Python enhanced BPE output directory contains:
 Full-corpus tokenization writes arrays and metadata under:
 
 - `bpe_tokenized_corpora/`
+- `bpe_tokenized_corpora_rs/` when using the Rust encoder wrapper
 
 Those `.npy` arrays are intended for memory-mapped reads:
 
