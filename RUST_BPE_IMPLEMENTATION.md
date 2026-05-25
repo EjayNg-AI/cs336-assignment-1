@@ -288,6 +288,28 @@ outputs are rejected unless `--force` is supplied. Temporary files use sibling
 paths such as `valid.uint16.tmp` and `valid.npy.tmp`, so interrupted runs leave
 recoverable scratch files without silently corrupting a completed final array.
 
+### Compatibility for Training Reads
+
+Rust and Python `.npy` files do not need to have identical byte-for-byte headers
+to be equivalent training inputs. NumPy headers include a small text dictionary,
+and different writers may choose different whitespace or padding while still
+describing the same array. Downstream LLM training code should load the file
+through NumPy, for example with `np.load(..., mmap_mode="r")`, rather than
+assuming a fixed header length.
+
+For training, the important compatibility properties are:
+
+- dtype is `uint16` / `'<u2'`;
+- shape is the same one-dimensional token count;
+- payload token bytes are identical;
+- sidecar metadata reports the same token count and token-stream SHA-256.
+
+The OpenWebText validation telemetry run below produced Python and Rust `.npy`
+files whose total file sizes differed by 48 bytes because the headers were
+padded differently. The payload SHA-256 was identical, so `np.load` exposes the
+same token-ID array and the size difference does not affect subsequent LLM
+training.
+
 ## Trainer Pipeline
 
 The trainer follows the Python enhanced trainer's phases:
@@ -1015,6 +1037,110 @@ Known intentional differences:
 - `metadata.json` has Rust-specific fields and format naming.
 - Raw `vocab.json` bytes may differ because Python and Rust serialize JSON
   differently, but the parsed JSON object is expected to match.
+
+## OpenWebText Validation Telemetry
+
+The Rust trainer and encoder were run on the available OpenWebText validation
+split:
+
+```text
+data/owt_valid.txt
+```
+
+There is no separate OpenWebStories validation file in the repository data
+directory; this run uses the OpenWebText validation corpus documented by the
+data scripts. The validation file size was `289,998,753` bytes.
+
+The trainer comparison used the same configuration for Python and Rust:
+
+```sh
+--input data/owt_valid.txt
+--vocab-size 32000
+--special-token '<|endoftext|>'
+--num-workers 8
+--chunk-bytes 67108864
+--heap-rebuild-factor 3.0
+```
+
+Generated telemetry and artifacts were written under:
+
+```text
+data/telemetry/owt_valid_bpe_32000_py/
+data/telemetry/owt_valid_bpe_32000_rs/
+data/telemetry/owt_valid_encoded_py/
+data/telemetry/owt_valid_encoded_rs/
+```
+
+Trainer parity was exact for the relevant statistics and artifacts:
+
+| Field | Python | Rust | Result |
+| --- | ---: | ---: | --- |
+| Input bytes | `289998753` | `289998753` | Match |
+| Final vocab size | `32000` | `32000` | Match |
+| Merge count | `31743` | `31743` | Match |
+| Unique pretokens | `627486` | `627486` | Match |
+| Total pretokens | `60137292` | `60137292` | Match |
+| Initial pair count | `11851` | `11851` | Match |
+| Final pair count | `549835` | `549835` | Match |
+| Heap rebuild count | `17` | `17` | Match |
+| `merges.txt` | same | same | Byte-identical |
+| Parsed `vocab.json` | same | same | Equal |
+
+Trainer phase timing:
+
+| Phase | Python | Rust | Speedup |
+| --- | ---: | ---: | ---: |
+| Pretoken counting | `5.66s` | `2.80s` | `2.02x` |
+| Word materialization | `0.22s` | `0.074s` | `3.01x` |
+| Initial pair state | `1.16s` | `0.30s` | `3.89x` |
+| Initial heap build | `0.0043s` | `0.0012s` | `3.54x` |
+| Merge loop | `55.25s` | `9.28s` | `5.95x` |
+| Artifact writing | `0.25s` | `0.038s` | `6.51x` |
+| Internal total training | `62.55s` | `12.50s` | `5.00x` |
+| `/usr/bin/time` wall clock | `63.56s` | `12.86s` | `4.94x` |
+
+The `/usr/bin/time -v` trainer run also showed lower Rust peak memory:
+
+| Metric | Python | Rust |
+| --- | ---: | ---: |
+| User time | `99.90s` | `29.53s` |
+| System time | `2.11s` | `0.48s` |
+| CPU utilization | `160%` | `233%` |
+| Maximum resident set size | `1233080 KB` | `556672 KB` |
+
+The encoder comparison used each implementation's tokenizer artifacts from the
+validation-corpus training run and encoded the same `data/owt_valid.txt` file.
+
+Encoder parity:
+
+| Field | Python | Rust | Result |
+| --- | ---: | ---: | --- |
+| Input bytes | `289998753` | `289998753` | Match |
+| Token count | `66296750` | `66296750` | Match |
+| Min token ID | `10` | `10` | Match |
+| Max token ID | `31999` | `31999` | Match |
+| Bytes/token | `4.374252930950612` | `4.374252930950612` | Match |
+| Payload SHA-256 | `8fc6e46dc77058c2165ab5e316ba0a49e93a74954f1ce7b9fd32b49ac603f9af` | same | Match |
+
+Encoder timing:
+
+| Metric | Python | Rust | Speedup |
+| --- | ---: | ---: | ---: |
+| Internal encoder time | `60.85s` | `28.55s` | `2.13x` |
+| `/usr/bin/time` wall clock | `61.04s` | `28.55s` | `2.14x` |
+| Maximum resident set size | `295396 KB` | `52028 KB` | `5.68x` lower for Rust |
+
+The Python and Rust `.npy` files differed in total file size by 48 bytes
+because their NumPy headers used different padding:
+
+| File | Size |
+| --- | ---: |
+| Python `.npy` | `132593628` bytes |
+| Rust `.npy` | `132593580` bytes |
+
+The token payload SHA-256 matched exactly. This confirms the difference is
+header-only and does not change the token stream consumed by LLM training code
+that reads the arrays through NumPy.
 
 ## Full TinyStories Run
 
