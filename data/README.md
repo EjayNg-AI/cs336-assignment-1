@@ -39,6 +39,9 @@ Full-corpus tokenization writes arrays and metadata under:
 
 - `bpe_tokenized_corpora/`
 - `bpe_tokenized_corpora_rs/` when using the Rust encoder wrapper
+- isolated Rust timing runs such as `rust_owt_full_20260526_0411/`, when a
+  run needs to keep tokenizer artifacts, encoded arrays, manifests, and
+  `/usr/bin/time` telemetry together
 
 Those `.npy` arrays are intended for memory-mapped reads:
 

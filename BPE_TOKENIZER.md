@@ -152,6 +152,23 @@ because Python and Rust serialize JSON strings differently.
 See `RUST_BPE_IMPLEMENTATION.md` for implementation details, parity notes, and
 the full phase-level timing table.
 
+A completed full OpenWebText optimized Rust run is stored under
+`data/rust_owt_full_20260526_0411/`. The tokenizer artifacts are in
+`tokenizer/`, full-corpus `.npy` arrays are in `encoded/openwebtext/`, and
+wall-clock telemetry is in `telemetry/`.
+
+| Task | Rust wall clock | Python comparison |
+| --- | ---: | --- |
+| OpenWebText 32k training | 4 min 14.74 sec | Python enhanced metadata: 17 min 48.67 sec, about 4.20x slower |
+| OpenWebText train encoding | 9 min 2.22 sec | Previous Python full-corpus arrays match by token count and SHA-256, but no full encoding wall-clock telemetry file is present |
+| OpenWebText validation encoding | 13.40 sec | Earlier timed Python validation encoder run: 61.04 sec, using validation-corpus tokenizer artifacts |
+
+The Rust full OpenWebText tokenizer matched the Python full tokenizer:
+31,743 merges, 6,601,892 unique pretokens, byte-identical `merges.txt`, and
+parsed `vocab.json` equality. The Rust-encoded train and validation arrays
+matched the previously documented Python full-corpus token-stream SHA-256
+values.
+
 Recent optimization findings are also documented there. On one warmup plus one
 timed run for full TinyStories training and two delimiter-aligned OpenWebText
 training subsamples of similar size, the optimized Rust paths improved the

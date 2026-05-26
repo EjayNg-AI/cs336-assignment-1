@@ -195,6 +195,13 @@ The Rust encoder wrapper `run_bpe_experiment_3_tokenization_rs.sh` writes the
 same array and metadata format from `vocab.json` / `merges.txt` artifacts, using
 `data/bpe_tokenized_corpora_rs/` as its default output directory.
 
+Ad hoc timed Rust runs may also be isolated under a run-specific ignored
+`data/` subdirectory. The full OpenWebText optimized Rust run from 2026-05-26 is
+stored under `data/rust_owt_full_20260526_0411/`, with tokenizer artifacts in
+`tokenizer/`, OpenWebText train/validation `.npy` arrays and metadata in
+`encoded/`, and `/usr/bin/time -v` telemetry plus a summary JSON in
+`telemetry/`.
+
 ## Pretokenization Example
 
 `cs336_basics/pretokenization_example.py` is reference starter code for splitting a corpus into chunks on a special token boundary. It demonstrates how to find chunk boundaries aligned to a byte-string special token such as `<|endoftext|>`, then read each chunk independently for pre-token counting. Its purpose is instructional: it shows how pre-tokenization can be parallelized safely without allowing BPE merges across document boundaries. It is not itself the submitted BPE trainer.

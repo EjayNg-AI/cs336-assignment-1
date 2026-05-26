@@ -1235,6 +1235,99 @@ Artifact parity for the full TinyStories run:
 - Rust training does not produce `vocab.pkl` or `merges.pkl`; the encoder can
   produce `.npy` token-ID arrays from `vocab.json` and `merges.txt`.
 
+## 2026-05-26 Full TinyStories Rust Workflow
+
+The optimized Rust workflow was rerun end-to-end on the full TinyStories
+corpus, with training on `data/TinyStoriesV2-GPT4-train.txt` and encoding of
+both the train and validation splits. Outputs were isolated from other BPE runs
+under:
+
+```text
+data/rust_tinystories_full_20260526_1037/
+|-- encoded/
+|   |-- manifest.json
+|   `-- tinystories/
+|       |-- train.json
+|       |-- train.npy
+|       |-- valid.json
+|       `-- valid.npy
+|-- telemetry/
+|   |-- encode_train_time.txt
+|   |-- encode_valid_time.txt
+|   |-- run_summary.json
+|   `-- train_time.txt
+`-- tokenizer/
+    |-- merges.txt
+    |-- metadata.json
+    `-- vocab.json
+```
+
+Training used the standard TinyStories 10k configuration:
+
+```sh
+target/release/cs336-bpe-train \
+  --input data/TinyStoriesV2-GPT4-train.txt \
+  --vocab-size 10000 \
+  --special-token '<|endoftext|>' \
+  --num-workers 8 \
+  --chunk-bytes 67108864 \
+  --heap-rebuild-factor 3.0 \
+  --output-dir data/rust_tinystories_full_20260526_1037/tokenizer
+```
+
+The Rust trainer matched the existing Python TinyStories tokenizer artifacts and
+statistics:
+
+| Field | Python full run | Rust full run | Result |
+| --- | ---: | ---: | --- |
+| Input bytes | `2227753162` | `2227753162` | Match |
+| Final vocab size | `10000` | `10000` | Match |
+| Merge count | `9743` | `9743` | Match |
+| Unique pretokens | `59933` | `59933` | Match |
+| Total pretokens | `536592168` | `536592168` | Match |
+| Initial pair count | `2108` | `2108` | Match |
+| Final pair count | `47278` | `47278` | Match |
+| Heap rebuild count | `8` | `8` | Match |
+| `merges.txt` | same | same | Byte-identical |
+| Parsed `vocab.json` | same | same | Equal |
+
+Trainer timing comparison against the current Python metadata in
+`data/tinystories_bpe_10000/metadata.json`:
+
+| Phase | Python | Rust | Speedup |
+| --- | ---: | ---: | ---: |
+| Pretoken counting | `50.18s` | `21.54s` | `2.33x` |
+| Word materialization | `0.013s` | `0.0036s` | `3.65x` |
+| Initial pair state | `0.096s` | `0.021s` | `4.56x` |
+| Initial heap build | `0.00076s` | `0.000092s` | `8.31x` |
+| Merge loop | `2.11s` | `0.30s` | `7.10x` |
+| Artifact writing | `0.099s` | `0.0073s` | `13.58x` |
+| Internal total training | `52.50s` | `21.87s` | `2.40x` |
+| `/usr/bin/time` wall clock | not recorded | `21.87s` | - |
+
+Encoding used the new Rust tokenizer artifacts and wrote NumPy `uint16` arrays:
+
+| Split | Tokens | Bytes/token | Rust wall clock | `.npy` payload SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| TinyStories train | `541229347` | `4.116098239` | `1 min 22.03 sec` | `9ef3250b31cf6ab174cd42d2cf31fc70d451012e913b417faaa47a5b9f1e150b` |
+| TinyStories validation | `5465883` | `4.116919627` | `0.88 sec` | `5831fc18b035d8c133665d2af7bca926be6c401d195c0ad272554a5711cdc04d` |
+
+Both arrays were verified with memory-mapped NumPy loads:
+
+```text
+data/rust_tinystories_full_20260526_1037/encoded/tinystories/train.npy uint16 (541229347,)
+data/rust_tinystories_full_20260526_1037/encoded/tinystories/valid.npy uint16 (5465883,)
+```
+
+The token counts and payload SHA-256 values match the previously documented
+Python full-corpus TinyStories arrays. The workspace contains the older Python
+`.npy` arrays at `data/tinystories_train_ids.npy` and
+`data/tinystories_valid_ids.npy`, but it does not contain wall-clock telemetry
+for that Python encoding run, so no full Python-vs-Rust encoding wall-clock
+comparison is available. As with the OpenWebText arrays, the Rust `.npy` files
+are 48 bytes smaller than the Python `.npy` files because their NumPy header
+padding differs; the token payloads match.
+
 ## 2026-05-25 Optimization Findings
 
 The Rust BPE trainer and encoder were optimized for wall-clock time while
@@ -1294,6 +1387,125 @@ Correctness checks for the benchmarked artifacts all passed:
 - Trainer `vocab.json` outputs were equal after parsing as JSON.
 - Encoder token counts, min/max token IDs, and
   `token_stream_sha256_uint16_le` matched between baseline and optimized runs.
+
+## Full OpenWebText Rust Run
+
+The optimized Rust workflow was run end-to-end on the full OpenWebText corpus
+available in `data/` on 2026-05-26 local time, using the same 32k tokenizer
+configuration as the previous Python enhanced full-corpus run:
+
+```sh
+target/release/cs336-bpe-train \
+  --input data/owt_train.txt \
+  --vocab-size 32000 \
+  --special-token '<|endoftext|>' \
+  --num-workers 8 \
+  --chunk-bytes 67108864 \
+  --heap-rebuild-factor 3.0 \
+  --output-dir data/rust_owt_full_20260526_0411/tokenizer
+```
+
+Training and encoding artifacts were isolated from other runs under:
+
+```text
+data/rust_owt_full_20260526_0411/
+|-- encoded/
+|   |-- manifest.json
+|   `-- openwebtext/
+|       |-- train.json
+|       |-- train.npy
+|       |-- valid.json
+|       `-- valid.npy
+|-- telemetry/
+|   |-- encode_train_time.txt
+|   |-- encode_valid_time.txt
+|   |-- run_summary.json
+|   `-- train_time.txt
+`-- tokenizer/
+    |-- merges.txt
+    |-- metadata.json
+    `-- vocab.json
+```
+
+The Rust trainer matched the existing full Python OpenWebText tokenizer
+artifacts and statistics:
+
+| Field | Python full run | Rust full run | Result |
+| --- | ---: | ---: | --- |
+| Input bytes | `11920511059` | `11920511059` | Match |
+| Final vocab size | `32000` | `32000` | Match |
+| Merge count | `31743` | `31743` | Match |
+| Unique pretokens | `6601892` | `6601892` | Match |
+| Total pretokens | `2471753092` | `2471753092` | Match |
+| Initial pair count | `19592` | `19592` | Match |
+| Final pair count | `3189962` | `3189962` | Match |
+| Heap rebuild count | `45` | `45` | Match |
+| `merges.txt` | same | same | Byte-identical |
+| Parsed `vocab.json` | same | same | Equal |
+
+Trainer timing comparison:
+
+| Phase | Python | Rust | Speedup |
+| --- | ---: | ---: | ---: |
+| Pretoken counting | `261.42s` | `126.78s` | `2.06x` |
+| Word materialization | `6.09s` | `1.16s` | `5.26x` |
+| Initial pair state | `16.89s` | `4.46s` | `3.79x` |
+| Initial heap build | `0.0095s` | `0.00076s` | `12.40x` |
+| Merge loop | `783.97s` | `120.42s` | `6.51x` |
+| Artifact writing | `0.25s` | `0.16s` | `1.57x` |
+| Internal total training | `1068.67s` | `252.99s` | `4.22x` |
+| `/usr/bin/time` wall clock | not recorded | `254.74s` | - |
+
+The prior Python full training metadata reports `17 min 48.67 sec`; compared
+with the Rust `/usr/bin/time` wall clock of `4 min 14.74 sec`, the optimized
+Rust trainer was about `4.20x` faster.
+
+The run then encoded both OpenWebText splits with the newly trained Rust
+artifacts:
+
+```sh
+target/release/cs336-bpe-encode \
+  --vocab data/rust_owt_full_20260526_0411/tokenizer/vocab.json \
+  --merges data/rust_owt_full_20260526_0411/tokenizer/merges.txt \
+  --special-token '<|endoftext|>' \
+  --input data/owt_train.txt \
+  --output-ids-npy data/rust_owt_full_20260526_0411/encoded/openwebtext/train.npy \
+  --metadata-json data/rust_owt_full_20260526_0411/encoded/openwebtext/train.json \
+  --manifest-json data/rust_owt_full_20260526_0411/encoded/manifest.json \
+  --split-name owt_train \
+  --corpus openwebtext \
+  --split train \
+  --stream-chunk-bytes 1048576 \
+  --token-progress-interval 100000000
+```
+
+Encoding outputs:
+
+| Split | Tokens | Bytes/token | Rust wall clock | `.npy` payload SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| OpenWebText train | `2727120452` | `4.371098112` | `9 min 2.22 sec` | `e736315eb244aa6adbbceea6ab0651cc544bc094adc4071763c97e99c241ca6c` |
+| OpenWebText validation | `66401098` | `4.367378880` | `13.40 sec` | `644d6bb54a0fe0e9e9605e60a7b904967b50e25d22d32aa20e9cfb343283e577` |
+
+Both arrays were verified with memory-mapped NumPy loads:
+
+```text
+data/rust_owt_full_20260526_0411/encoded/openwebtext/train.npy uint16 (2727120452,)
+data/rust_owt_full_20260526_0411/encoded/openwebtext/valid.npy uint16 (66401098,)
+```
+
+The train and validation token counts and payload SHA-256 values match the
+previously documented Python full-corpus token arrays. The current workspace
+does not contain a full OpenWebText Python encoding wall-clock telemetry file;
+only the earlier validation-corpus Python encoder telemetry is timed. That
+earlier timed run used validation-corpus tokenizer artifacts rather than the
+full OpenWebText tokenizer, so it is not an artifact-equivalent full-run
+comparison; it took `61.04s` wall clock, while this optimized Rust validation
+encoding took `13.40s`.
+
+The Rust `.npy` files are 48 bytes smaller than the previously documented
+Python `.npy` files for the same splits because the NumPy header padding differs
+between writers. The token payload SHA-256 values match exactly, so
+memory-mapped NumPy reads expose the same token-ID arrays.
 
 ## Recommended Future Rust Runs
 

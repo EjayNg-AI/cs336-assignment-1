@@ -104,6 +104,15 @@ bash run_bpe_experiment_3_tokenization_rs.sh
 Use `FORCE=1` only when intentionally replacing outputs in the selected
 `EXPERIMENT3_OUTPUT_DIR`.
 
+The latest full OpenWebText optimized Rust run is isolated under
+`data/rust_owt_full_20260526_0411/`. It includes tokenizer artifacts,
+OpenWebText train/validation `.npy` arrays, sidecar metadata, a manifest, and
+`/usr/bin/time -v` telemetry. The 32k training wall clock was `4:14.74`
+compared with the previous Python enhanced training metadata time of
+`17:48.67`; full train encoding wrote 2,727,120,452 tokens in `9:02.22`.
+See [`../../RUST_BPE_IMPLEMENTATION.md`](../../RUST_BPE_IMPLEMENTATION.md) for
+the phase table and comparison notes.
+
 ## Validation
 
 Run Rust unit tests:
