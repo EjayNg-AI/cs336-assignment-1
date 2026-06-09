@@ -21,6 +21,8 @@ substantive implementation logic here.
   SwiGLU feed-forward network.
 - [`nn_attention.py`](nn_attention.py): manual softmax, scaled dot-product
   attention, and causal multi-head self-attention.
+- [`PUBLIC_API_INVENTORY.md`](PUBLIC_API_INVENTORY.md): systematic inventory of
+  reusable public Python functions and classes in this package.
 - [`__init__.py`](__init__.py): package metadata lookup.
 
 ## Implementation Status
@@ -50,6 +52,12 @@ Still missing in the assignment-facing adapter path:
   asks this package to implement manually.
 - Add new submitted implementation modules here, then expose them through thin
   functions in [`../tests/adapters.py`](../tests/adapters.py).
+- Before adding a reusable public function or class, check
+  [`PUBLIC_API_INVENTORY.md`](PUBLIC_API_INVENTORY.md) and compose existing
+  package primitives where practical.
+- When a reusable public function or class is added, renamed, removed, or
+  materially repurposed, update
+  [`PUBLIC_API_INVENTORY.md`](PUBLIC_API_INVENTORY.md) in the same change.
 - When submitted code is added, moved, or reorganized, update
   [`../repository_structure.md`](../repository_structure.md).
 

@@ -13,6 +13,9 @@ language model:
 The test suite in [`tests/`](tests/) is the behavioral specification. Submitted
 Python implementation code lives in [`cs336_basics/`](cs336_basics/) and is
 connected to the tests through [`tests/adapters.py`](tests/adapters.py).
+For a systematic inventory of reusable public Python functions and classes in
+the package, see
+[`cs336_basics/PUBLIC_API_INVENTORY.md`](cs336_basics/PUBLIC_API_INVENTORY.md).
 
 ## Project Status
 
@@ -111,6 +114,8 @@ bash make_submission.sh
 - [`requirements_for_code_produced.md`](requirements_for_code_produced.md):
   restrictions for submitted assignment code
 - [`cs336_basics/README.md`](cs336_basics/README.md): Python implementation package
+- [`cs336_basics/PUBLIC_API_INVENTORY.md`](cs336_basics/PUBLIC_API_INVENTORY.md):
+  reusable public Python functions and classes in `cs336_basics/`
 - [`tests/README.md`](tests/README.md): test suite, fixtures, snapshots, and adapter status
 - [`bpe_samples/README.md`](bpe_samples/README.md): retained BPE notebook samples
 - [`data/README.md`](data/README.md): ignored local corpora and generated artifacts

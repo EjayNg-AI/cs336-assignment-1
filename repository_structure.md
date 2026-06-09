@@ -25,6 +25,9 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
   composes the custom `Linear` and `RotaryPositionalEmbedding` modules, applies causal masking with
   `True` meaning "allowed to attend", splits projections into heads without prebuilt attention
   helpers, and optionally applies RoPE to queries and keys only.
+- `cs336_basics/PUBLIC_API_INVENTORY.md` inventories reusable public Python functions and classes
+  under `cs336_basics/`, with maintenance guidance for checking existing primitives before adding
+  new reusable implementation code.
 - `cs336_basics/train_bpe_enhanced.py` contains an additive large-corpus BPE trainer variant with parallel
   pre-token counting, integer-token merge state, heap rebuild maintenance, artifact writing, and training
   metadata emission. It leaves the original trainer module unchanged and is not wired into the default test
@@ -71,6 +74,8 @@ This repository contains the starter code and tests for CS336 Assignment 1: Basi
 - `crates/cs336_bpe_rs/src/README.md`, `src/bin/README.md`, `src/trainer/README.md`, and `src/encoder/README.md`
   document the Rust source layout, CLI entrypoints, training pipeline, and encoder modules.
 - `cs336_basics/README.md` documents the submitted Python package, implemented modules, current gaps, and development rules.
+- `cs336_basics/PUBLIC_API_INVENTORY.md` inventories reusable public Python functions and classes in
+  the submitted Python package.
 - `tests/README.md` documents the pytest suite, adapter role, fixture folders, commands, and current adapter gaps.
 - `tests/fixtures/README.md` documents small tracked test corpora, tokenizer references, and transformer fixtures.
 - `tests/fixtures/ts_tests/README.md` documents the transformer model fixture files.

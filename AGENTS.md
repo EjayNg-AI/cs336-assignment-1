@@ -32,6 +32,7 @@ Consult these files when they are relevant to the change:
 - `repository_structure.md`: maintained repository map covering implementation code, tests, scripts, data artifacts, and documentation.
 - Folder-level `README.md` files: local purpose, important files, setup assumptions, commands, inputs/outputs, implementation status, and known gaps for important folders such as `cs336_basics/`, `tests/`, `data/`, `bpe_samples/`, and `crates/`.
 - `cs336_basics/README.md`: package-level documentation for submitted Python implementation modules, current implementation status, development rules, and related commands.
+- `cs336_basics/PUBLIC_API_INVENTORY.md`: inventory of public-facing reusable Python functions and classes in `cs336_basics/`; consult it before adding reusable implementation code.
 - `tests/README.md`: test-suite overview, adapter status, fixture/snapshot guidance, and focused test commands.
 - `data/README.md`: local data download expectations, ignored generated artifacts, tokenizer artifact conventions, and token-ID array notes.
 - `tests/adapters.py`: the bridge between the tests and implementations in `cs336_basics/`; adapter functions should stay thin.
@@ -49,6 +50,7 @@ Consult these files when they are relevant to the change:
 - Connect implementations to the tests through `tests/adapters.py`.
 - Keep adapter functions thin: they should import and call code from `cs336_basics/` rather than contain substantial implementation logic.
 - Future submitted implementations for model layers, optimization, data loading, serialization, and training utilities should also live under `cs336_basics/`, split into modules that match the assignment component being implemented.
+- Before creating a new reusable class or function under `cs336_basics/`, check `cs336_basics/PUBLIC_API_INVENTORY.md` and compose existing primitives where practical rather than reproducing similar code or structures.
 - Notebook-only work is not the source of submitted implementation behavior unless the same logic is also placed under `cs336_basics/` and connected through `tests/adapters.py`.
 
 ## Coding Restrictions
@@ -62,6 +64,7 @@ Consult these files when they are relevant to the change:
 ## Documentation Maintenance
 
 - Whenever new submitted code is written, moved, or reorganized outside Jupyter notebooks, update `repository_structure.md` and the relevant folder-level `README.md` files in the same change.
+- Whenever a reusable public-facing Python function or class is added, renamed, removed, or materially repurposed under `cs336_basics/`, update `cs336_basics/PUBLIC_API_INVENTORY.md` in the same change.
 - Whenever repository changes alter setup, data requirements, common commands, scripts, generated artifacts, project status, source layout, test coverage, or contributor workflows, update the affected documentation in the same change.
 - When a new Python implementation module is added to `cs336_basics/`, update `cs336_basics/README.md`; when adapter coverage changes, update `tests/README.md`; when data scripts or artifact formats change, update `data/README.md` and any relevant BPE documentation.
 - Updates that only affect Jupyter notebooks do not require `repository_structure.md` updates unless notebook changes also alter submitted code, tracked artifacts, scripts, data expectations, or documented workflows.
